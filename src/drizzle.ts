@@ -47,7 +47,7 @@ import {
   Token,
   type ASTCondition,
   type ASTNode
-} from ".";
+} from "./index";
 
 type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
 
