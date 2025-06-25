@@ -7,9 +7,9 @@ settings:
 importers:
 
   .:
-    dependencies:
+    optionalDependencies:
       drizzle-orm:
-        specifier: '>=1.0.0-beta.1'
+        specifier: ^1.0.0-beta.1
         version: 1.0.0-beta.1-fd5d1e8
 
 packages:
@@ -105,4 +105,5 @@ packages:
 
 snapshots:
 
-  drizzle-orm@1.0.0-beta.1-fd5d1e8: {}
+  drizzle-orm@1.0.0-beta.1-fd5d1e8:
+    optional: true
