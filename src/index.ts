@@ -183,9 +183,9 @@ export class AdvancedSearchParser {
 	private tokenize(query: string): Token[] {
 		const tokens: Token[] = [];
 		const regex = /(-?\()|(\))|(-)|(\w+)(:|=|>=|<=|>|<)(-?\d+(?:\.\d+)?)|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
-		let match;
+		let match: RegExpExecArray | null;
 
-		while ((match = regex.exec(query)) !== null) {
+		while (match = regex.exec(query)) {
 			const [, open, close, negation, keywordNumeric, operator, numericValue, keyword, value, quote, regex] = match;
 
 			if (open) {
@@ -224,7 +224,7 @@ export class AdvancedSearchParser {
 				if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
 					continue;
 				}
-        
+
 				tokens.push({
 					type: "keyword_numeric",
 					key: keywordNumeric,
