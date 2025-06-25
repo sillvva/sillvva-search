@@ -66,16 +66,15 @@
  *     return { name: { ilike: `%${cond.value}%` } };
  *   }
  *   if (cond.key === "age") {
- *     const age = parseInt(cond.value);
- *     if (isNaN(age)) return undefined;
- *     return { age };
+ *     const op = parser.parseNumeric(cond);
+ *     return op && { age: op };
  *   }
  *   return undefined;
  * }, { validKeys: ["name", "age"] });
  *
  * // Parse a query string ✅
- * const { where } = parser.parseDrizzle("name:John age:30");
- * // where: { AND: [{ name: { ilike: "%John%" } }, { age: 30 }] }
+ * const { where } = parser.parseDrizzle("name:John AND age>=30");
+ * // where: { AND: [{ name: { ilike: "%John%" } }, { age: { gte: 30 } }] }
  * 
  * // Invalid age ❌
  * const { where } = parser.parseDrizzle("name:John age:thirty");
@@ -92,12 +91,18 @@
 type Operator = "AND" | "OR";
 
 /**
+ * Represents a numeric operator in a search query.
+ */
+export type NumericOperator = "=" | ">" | "<" | ">=" | "<=";
+
+/**
  * Represents a token parsed from the search query string.
  */
 export type Token =
   | { type: "keyword"; key: string; value: string }
   | { type: "keyword_phrase"; key: string; value: string }
   | { type: "keyword_regex"; key: string; value: string }
+  | { type: "keyword_numeric"; key: string; operator: NumericOperator; value: number }
   | { type: "word"; value: string }
   | { type: "phrase"; value: string }
   | { type: "regex"; value: string }
@@ -129,8 +134,9 @@ interface ConditionNode {
   type: "condition";
   token: Token["type"];
   key?: string;
-  value: string;
+  value: string | number;
   negated?: boolean;
+  operator?: NumericOperator;
 }
 
 /**
@@ -140,11 +146,15 @@ export interface ASTCondition {
   /** The key for the condition, if any (e.g., 'author'). */
   key?: string;
   /** The value for the condition (e.g., 'Tolkien'). */
-  value: string;
+  value: string | number;
   /** Whether the value is a regex pattern. */
   isRegex: boolean;
   /** Whether the condition is negated. */
   isNegated: boolean;
+  /** Whether the condition is numeric. */
+  isNumeric: boolean;
+  /** The numeric operator, if applicable. */
+  operator?: NumericOperator;
 }
 
 /**
@@ -173,11 +183,11 @@ export class AdvancedSearchParser {
   private tokenize(query: string): Token[] {
     const tokens: Token[] = [];
     const regex =
-      /(-?\()|(\))|(-)|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
+      /(-?\()|(\))|(-)|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/|(=|>=|<=|>|<)?(-?\d+(?:\.\d+)?))/g;
     let match;
 
     while ((match = regex.exec(query)) !== null) {
-      const [, open, close, negation, keyword, value, quote, regex] = match;
+      const [, open, close, negation, keyword, value, quote, regex, operator, numericValue] = match;
 
       if (open) {
         tokens.push({ type: "open_paren", negated: open.startsWith("-") });
@@ -211,6 +221,13 @@ export class AdvancedSearchParser {
             type: "keyword_regex",
             key: keyword,
             value: regex
+          });
+        } else if (operator && numericValue) {
+          tokens.push({
+            type: "keyword_numeric",
+            key: keyword,
+            operator,
+            value: parseFloat(numericValue)
           });
         }
       } else if (value) {
@@ -294,6 +311,15 @@ export class AdvancedSearchParser {
             value: token.value
           };
 
+        case "keyword_numeric":
+          return {
+            type: "condition",
+            token: token.type,
+            key: token.key,
+            value: token.value,
+            operator: token.operator
+          };
+
         case "word":
         case "phrase":
         case "regex":
@@ -335,7 +361,9 @@ export class AdvancedSearchParser {
               key: ast.key,
               value: ast.value,
               isRegex: ast.token.includes("regex"),
-              isNegated
+              isNegated,
+              isNumeric: ast.token === "keyword_numeric",
+              operator: ast.operator
             }
           ];
         }

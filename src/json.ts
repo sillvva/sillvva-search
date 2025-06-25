@@ -51,12 +51,33 @@ export class JSONSearchParser<T extends Record<string, unknown>> extends Advance
       let match = false;
       if (ast.token.includes("regex")) {
         try {
-          match = new RegExp(ast.value).test(value as string);
+          match = new RegExp(String(ast.value)).test(String(value));
         } catch {
           match = false;
         }
       } else {
-        match = (value as string).toLowerCase() === ast.value.toLowerCase();
+        match = false;
+        if (ast.token === "keyword_numeric") {
+          switch (ast.operator) {
+            case "=":
+              match = Number(value) === Number(ast.value);
+              break;
+            case ">":
+              match = Number(value) > Number(ast.value);
+              break;
+            case "<":
+              match = Number(value) < Number(ast.value);
+              break;
+            case ">=":
+              match = Number(value) >= Number(ast.value);
+              break;
+            case "<=":
+              match = Number(value) <= Number(ast.value);
+              break;
+          }
+        } else {
+          match = String(value).toLowerCase() === String(ast.value).toLowerCase();
+        }
       }
       return ast.negated ? !match : match;
     }

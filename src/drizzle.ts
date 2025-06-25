@@ -15,16 +15,19 @@
  *     return { name: { ilike: `%${cond.value}%` } };
  *   }
  *   if (cond.key === "age") {
- *     const age = parseInt(cond.value);
- *     if (isNaN(age)) return undefined;
- *     return { age };
+ *     const op = parser.parseNumeric(cond);
+ *     return op && { age: op };
  *   }
  *   return undefined;
  * }, { validKeys: ["name", "age"] });
  *
  * // Parse a query string ✅
- * const { where } = parser.parseDrizzle("name:John AND age:30");
- * // where: { AND: [{ name: { ilike: "%John%" } }, { age: 30 }] }
+ * const { where } = parser.parseDrizzle("name:John AND age>=30");
+ * // where: { AND: [{ name: { ilike: "%John%" } }, { age: { gte: 30 } }] }
+ * 
+ * // Invalid age ❌
+ * const { where } = parser.parseDrizzle("name:John age:thirty");
+ * // where: { AND: [{ name: { ilike: "%John%" } }] }
  * 
  * // Usage
  * const users = await db.query.user.findMany({
@@ -40,11 +43,22 @@ import type {
 } from "drizzle-orm";
 import {
   AdvancedSearchParser,
+  NumericOperator,
   Token,
   type ASTCondition,
   type ASTNode,
   type AdvancedSearchParserOptions
 } from ".";
+
+type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
+
+const operatorMap = new Map<NumericOperator, DrizzleOperator>([
+  ["=", "eq"],
+  [">", "gt"],
+  ["<", "lt"],
+  [">=", "gte"],
+  ["<=", "lte"]
+]);
 
 export class DrizzleSearchParser<
   TRelations extends Relations<any, any, any>,
@@ -95,7 +109,9 @@ export class DrizzleSearchParser<
             key: node.key,
             value: node.value,
             isRegex: node.token.includes("regex"),
-            isNegated
+            isNegated,
+            isNumeric: node.token === "keyword_numeric",
+            operator: node.operator
           });
       }
     };
@@ -111,6 +127,14 @@ export class DrizzleSearchParser<
     }
 
     return clause;
+  }
+
+  parseNumeric(cond: ASTCondition): TFilter | undefined {
+    if (cond.isNumeric && cond.operator && typeof cond.value === "number") {
+      const op = operatorMap.get(cond.operator);
+      return op && { [op]: cond.value } as unknown as TFilter;
+    }
+    return undefined;
   }
 
   parseDrizzle(query: string): {
