@@ -220,6 +220,11 @@ export class AdvancedSearchParser {
 					});
 				}
 			} else if (keywordNumeric && operator && numericValue) {
+				// Filter out invalid keys if validKeys is specified
+				if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
+					continue;
+				}
+        
 				tokens.push({
 					type: "keyword_numeric",
 					key: keywordNumeric,
