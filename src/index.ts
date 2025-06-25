@@ -2,11 +2,10 @@
  * This module provides utilities for parsing and analyzing advanced search queries, including tokenization and abstract syntax tree generation.
  * @module
  *
- * ### AdvancedSearchParser
+ * ## AdvancedSearchParser
  *
- * This is a base class intended for creating a parser class. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle. See the DrizzleSearchParser and JSONSearchParser classes for examples.
+ * This is a base class intended for creating a parser class. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle. See the {@linkcode DrizzleSearchParser} and {@linkcode JSONSearchParser} classes for examples.
  *
- * @example
  * ```ts
  * import { AdvancedSearchParser } from "@sillvva/search";
  *
@@ -16,7 +15,7 @@
  * console.log(result.ast);
  * console.log(result.astConditions);
  * ```
- * Tokens:
+ * ### Tokens
  * ```json
  * [
  *   { type: 'keyword', key: 'author', value: 'Tolkien' },
@@ -24,7 +23,7 @@
  *   { type: 'keyword_phrase', key: 'title', value: 'The Hobbit' }
  * ]
  * ```
- * Abstract Syntax Tree:
+ * ### Abstract Syntax Tree
  * ```json
  * {
  *   type: 'binary',
@@ -33,7 +32,7 @@
  *   right: { type: 'condition', token: 'keyword_phrase', key: 'title', value: 'The Hobbit', negated: true }
  * }
  * ```
- * AST Conditions:
+ * ### AST Conditions
  * ```json
  * [
  *   { key: 'author', value: 'Tolkien', isRegex: false, isNegated: false },
@@ -41,21 +40,19 @@
  * ]
  * ```
  *
- * ### JSONSearchParser
+ * ## JSONSearchParser
  *
- * JSONSearchParser is a class that extends the AdvancedSearchParser class and provides a filter method that filters an array of JSON data using a search query.
+ * JSONSearchParser is a class that extends the {@linkcode AdvancedSearchParser} class and provides a filter method that filters an array of JSON data using a search query.
  *
- * @example
  * ```ts
  * const query = new JSONSearchParser(books, { validKeys: ["title", "author"] });
  * const filteredBooks = query.filter('author:Tolkien -title:"The Hobbit"');
  * ```
  *
- * ### DrizzleSearchParser
+ * ## DrizzleSearchParser
  *
- * DrizzleSearchParser is a class that extends the AdvancedSearchParser class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object.
+ * DrizzleSearchParser is a class that extends the {@linkcode AdvancedSearchParser} class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object.
  *
- * @example
  * ```ts
  * import { DrizzleSearchParser } from "@sillvva/search/drizzle";
  * import { relations } from "./schema";
@@ -167,6 +164,10 @@ export interface AdvancedSearchParserOptions {
 	 * An optional list of valid keys to allow in the search query. If specified, only these keys will be recognized.
 	 */
 	validKeys?: readonly string[];
+  /**
+   * An optional default key to use if no key is specified in the search query.
+   */
+  defaultKey?: string;
 }
 
 /**
@@ -238,13 +239,23 @@ export class AdvancedSearchParser {
 
 				if (upperValue === "AND" || upperValue === "OR") {
 					tokens.push({ type: "operator", value: upperValue });
+				} else if (this.options?.defaultKey) {
+					tokens.push({ type: "keyword", key: this.options.defaultKey, value });
 				} else {
 					tokens.push({ type: "word", value });
 				}
 			} else if (quote) {
-				tokens.push({ type: "phrase", value: quote });
+        if (this.options?.defaultKey) {
+          tokens.push({ type: "keyword_phrase", key: this.options.defaultKey, value: quote });
+        } else {
+          tokens.push({ type: "phrase", value: quote });
+        }
 			} else if (regex) {
-				tokens.push({ type: "regex", value: regex });
+        if (this.options?.defaultKey) {
+          tokens.push({ type: "keyword_regex", key: this.options.defaultKey, value: regex });
+        } else {
+          tokens.push({ type: "regex", value: regex });
+        }
 			}
 		}
 

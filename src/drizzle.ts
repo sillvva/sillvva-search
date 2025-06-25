@@ -1,8 +1,7 @@
 /**
- * This module provides a Drizzle ORM search utility that extends AdvancedSearchParser to parse advanced search queries into Drizzle-compatible filter objects.
+ * This module provides a Drizzle ORM search utility that extends {@linkcode AdvancedSearchParser} to parse advanced search queries into Drizzle-compatible filter objects. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
  * @module
  *
- * @example
  * ```ts
  * import { DrizzleSearchParser } from "@sillvva/search/drizzle";
  *
@@ -19,14 +18,14 @@
  *     return op && { age: op };
  *   }
  *   return undefined;
- * }, { validKeys: ["name", "age"] });
+ * }, { validKeys: ["name", "age"], defaultKey: "name" });
  *
  * // Parse a query string ✅
- * const { where } = parser.parseDrizzle("name:John AND age>=30");
+ * const { where } = parser.parseDrizzle("John age>=30");
  * // where: { AND: [{ name: { ilike: "%John%" } }, { age: { gte: 30 } }] }
  * 
  * // Invalid age ❌
- * const { where } = parser.parseDrizzle("name:John age:thirty");
+ * const { where } = parser.parseDrizzle("John age:thirty");
  * // where: { AND: [{ name: { ilike: "%John%" } }] }
  * 
  * // Usage
@@ -43,11 +42,11 @@ import type {
 } from "drizzle-orm";
 import {
   AdvancedSearchParser,
+  AdvancedSearchParserOptions,
   NumericOperator,
   Token,
   type ASTCondition,
-  type ASTNode,
-  type AdvancedSearchParserOptions
+  type ASTNode
 } from ".";
 
 type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
@@ -60,6 +59,11 @@ const operatorMap = new Map<NumericOperator, DrizzleOperator>([
   ["<=", "lte"]
 ]);
 
+/**
+ * A parser for Drizzle ORM that extends {@linkcode AdvancedSearchParser} to parse advanced search queries into Drizzle-compatible filter objects.
+ * @typeParam TRelations - The relations of the Drizzle schema.
+ * @typeParam TableName - The name of the table to search. See {@linkcode AdvancedSearchParserOptions}
+ */
 export class DrizzleSearchParser<
   TRelations extends Relations<any, any, any>,
   TableName extends keyof TRSchema,
@@ -69,6 +73,11 @@ export class DrizzleSearchParser<
     TRSchema
   > = RelationsFilter<TRSchema[TableName], TRSchema>
 > extends AdvancedSearchParser {
+  /**
+   * Create a new DrizzleSearchParser.
+   * @param conditionBuilderFn - A function that builds a Drizzle filter object from an {@linkcode ASTCondition}.
+   * @param options - Configuration options for the parser.
+   */
   constructor(
     private conditionBuilderFn: (ast: ASTCondition) => TFilter | undefined,
     options?: AdvancedSearchParserOptions
@@ -129,6 +138,11 @@ export class DrizzleSearchParser<
     return clause;
   }
 
+  /**
+   * Parse a numeric condition into a Drizzle filter object.
+   * @param cond - The {@linkcode ASTCondition} to parse.
+   * @returns The Drizzle filter object.
+   */
   parseNumeric(cond: ASTCondition): TFilter | undefined {
     if (cond.isNumeric && cond.operator) {
       const op = operatorMap.get(cond.operator);
@@ -137,6 +151,11 @@ export class DrizzleSearchParser<
     return undefined;
   }
 
+  /**
+   * Parse a search query into a Drizzle filter object.
+   * @param query - The search query string.
+   * @returns The parsed search query.
+   */
   parseDrizzle(query: string): {
     tokens: Token[];
     ast: ASTNode | null;

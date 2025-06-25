@@ -1,8 +1,7 @@
 /**
- * This module provides a JSON search utility that extends AdvancedSearchParser to filter arrays of JSON data using advanced search queries.
+ * This module provides a JSON search utility that extends {@linkcode AdvancedSearchParser} to filter arrays of JSON data using advanced search queries.
  * @module
  *
- * @example
  * ```ts
  * import { JSONSearchParser } from "@sillvva/search/json";
  *
@@ -16,7 +15,7 @@
  *   { title: "1984", author: "Orwell" }
  * ];
  *
- * const parser = new JSONSearchParser(books, { validKeys: ["title", "author"] });
+ * const parser = new JSONSearchParser(books, { validKeys: ["title", "author"], defaultKey: "title" });
  * const result = parser.filter('author:Tolkien');
  * // result: [{ title: "The Hobbit", author: "Tolkien" }]
  * ```
@@ -34,7 +33,7 @@ export class JSONSearchParser<T extends Record<any, any>> extends AdvancedSearch
    * @param data The array of JSON objects to filter.
    * @param options Configuration options for the parser.
    */
-  constructor(data: T[], options?: { validKeys?: readonly (keyof T & string)[] }) {
+  constructor(data: T[], options?: { validKeys?: readonly (keyof T & string)[], defaultKey?: keyof T & string }) {
     super(options);
     this.data = data;
   }
