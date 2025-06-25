@@ -1,0 +1,14 @@
+{
+  "name": "@sillvva/search",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./json": "./src/json.ts",
+    "./drizzle": "./src/drizzle.ts"
+  },
+  "license": "MIT",
+  "include": [
+    "src/**/*.ts"
+  ],
+  "description": "A parser and analyzer for advanced search queries, supporting tokenization, AST generation, and condition extraction."
+}
