@@ -50,7 +50,7 @@ export class JSONSearchParser<T extends Record<any, any>> extends AdvancedSearch
       if (typeof value !== "string") value = String(value ?? "");
       if (ast.key && this.options?.validKeys?.length && !this.options.validKeys.includes(ast.key)) return false;
       let match = false;
-      if (ast.token.includes("regex")) {
+      if (ast.token === "regex" || ast.token === "keyword_regex") {
         try {
           match = new RegExp(String(ast.value)).test(String(value));
         } catch {

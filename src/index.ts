@@ -111,6 +111,8 @@ export type Token =
 	| { type: "close_paren" }
 	| { type: "negation" };
 
+type ConditionToken = "keyword" | "keyword_phrase" | "keyword_regex" | "keyword_numeric" | "word" | "phrase" | "regex";
+
 /**
  * Represents a node in the abstract syntax tree (AST) for a search query.
  */
@@ -132,7 +134,7 @@ interface BinaryNode {
  */
 interface ConditionNode {
 	type: "condition";
-	token: Token["type"];
+	token: ConditionToken;
 	key?: string;
 	value: string | number;
 	negated?: boolean;
