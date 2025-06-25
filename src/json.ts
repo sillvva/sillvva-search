@@ -1,6 +1,5 @@
 /**
  * This module provides a JSON search utility that extends {@linkcode AdvancedSearchParser} to filter arrays of JSON data using advanced search queries.
- * @module
  *
  * @example
  * ## JSONSearchParser Example
@@ -21,6 +20,8 @@
  * const result = parser.filter('author:Tolkien');
  * // result: [{ title: "The Hobbit", author: "Tolkien" }]
  * ```
+ * 
+ * @module
  */
 import { AdvancedSearchParser, type ASTNode } from "./index";
 

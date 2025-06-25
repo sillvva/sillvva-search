@@ -1,6 +1,5 @@
 /**
  * This module provides utilities for parsing and analyzing advanced search queries, including tokenization and abstract syntax tree generation.
- * @module
  *
  * @example
  * ## AdvancedSearchParser
@@ -83,6 +82,8 @@
  * // Usage
  * const users = await db.query.user.findMany({ where });
  * ```
+ * 
+ * @module
  */
 
 /**
