@@ -16,7 +16,7 @@
  * console.log(result.astConditions);
  * ```
  * ### Tokens
- * ```json
+ * ```js
  * [
  *   { type: 'keyword', key: 'author', value: 'Tolkien' },
  *   { type: 'negation' },
@@ -24,7 +24,7 @@
  * ]
  * ```
  * ### Abstract Syntax Tree
- * ```json
+ * ```js
  * {
  *   type: 'binary',
  *   operator: 'AND',
@@ -33,7 +33,7 @@
  * }
  * ```
  * ### AST Conditions
- * ```json
+ * ```js
  * [
  *   { key: 'author', value: 'Tolkien', isRegex: false, isNegated: false },
  *   { key: 'title', value: 'The Hobbit', isRegex: false, isNegated: true }
