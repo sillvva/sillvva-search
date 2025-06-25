@@ -130,9 +130,9 @@ export class DrizzleSearchParser<
   }
 
   parseNumeric(cond: ASTCondition): TFilter | undefined {
-    if (cond.isNumeric && cond.operator && typeof cond.value === "number") {
+    if (cond.isNumeric && cond.operator) {
       const op = operatorMap.get(cond.operator);
-      return op && { [op]: cond.value } as unknown as TFilter;
+      return op && { [op]: Number(cond.value) } as unknown as TFilter;
     }
     return undefined;
   }
