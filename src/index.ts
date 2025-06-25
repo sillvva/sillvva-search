@@ -177,7 +177,7 @@ export class AdvancedSearchParser {
 	 * Create a new AdvancedSearchParser parser.
 	 * @param options Configuration options for the parser.
 	 */
-	constructor(private options?: AdvancedSearchParserOptions) {}
+	constructor(protected options?: AdvancedSearchParserOptions) {}
 
 	// Convert query to tokens
 	private tokenize(query: string): Token[] {

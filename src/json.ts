@@ -21,20 +21,20 @@
  * // result: [{ title: "The Hobbit", author: "Tolkien" }]
  * ```
  */
-import { AdvancedSearchParser, type AdvancedSearchParserOptions, type ASTNode } from "./index";
+import { AdvancedSearchParser, type ASTNode } from "./index";
 
 /**
  * A parser for filtering arrays of JSON data using advanced search queries.
  * @typeParam T - The type of the JSON objects in the array.
  */
-export class JSONSearchParser<T extends Record<string, unknown>> extends AdvancedSearchParser {
+export class JSONSearchParser<T extends Record<any, any>> extends AdvancedSearchParser {
   private data: T[];
   /**
    * Create a new JSONSearchParser.
    * @param data The array of JSON objects to filter.
    * @param options Configuration options for the parser.
    */
-  constructor(data: T[], options?: AdvancedSearchParserOptions) {
+  constructor(data: T[], options?: { validKeys?: readonly (keyof T & string)[] }) {
     super(options);
     this.data = data;
   }
@@ -48,6 +48,7 @@ export class JSONSearchParser<T extends Record<string, unknown>> extends Advance
     } else if (ast.type === "condition") {
       let value: unknown = ast.key ? item[ast.key] : undefined;
       if (typeof value !== "string") value = String(value ?? "");
+      if (ast.key && this.options?.validKeys?.length && !this.options.validKeys.includes(ast.key)) return false;
       let match = false;
       if (ast.token.includes("regex")) {
         try {
@@ -76,7 +77,7 @@ export class JSONSearchParser<T extends Record<string, unknown>> extends Advance
               break;
           }
         } else {
-          match = String(value).toLowerCase() === String(ast.value).toLowerCase();
+          match = String(value).toLowerCase().includes(String(ast.value).toLowerCase());
         }
       }
       return ast.negated ? !match : match;
