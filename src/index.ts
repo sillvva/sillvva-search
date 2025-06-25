@@ -2,6 +2,7 @@
  * This module provides utilities for parsing and analyzing advanced search queries, including tokenization and abstract syntax tree generation.
  * @module
  *
+ * @example
  * ## AdvancedSearchParser
  *
  * This is a base class intended for creating a parser class. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle. See the {@linkcode DrizzleSearchParser} and {@linkcode JSONSearchParser} classes for examples.
@@ -40,6 +41,7 @@
  * ]
  * ```
  *
+ * @example
  * ## JSONSearchParser
  *
  * JSONSearchParser is a class that extends the {@linkcode AdvancedSearchParser} class and provides a filter method that filters an array of JSON data using a search query.
@@ -49,6 +51,7 @@
  * const filteredBooks = query.filter('author:Tolkien -title:"The Hobbit"');
  * ```
  *
+ * @example
  * ## DrizzleSearchParser
  *
  * DrizzleSearchParser is a class that extends the {@linkcode AdvancedSearchParser} class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object.

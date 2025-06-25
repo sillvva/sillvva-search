@@ -2,6 +2,8 @@
  * This module provides a JSON search utility that extends {@linkcode AdvancedSearchParser} to filter arrays of JSON data using advanced search queries.
  * @module
  *
+ * @example
+ * ## JSONSearchParser Example
  * ```ts
  * import { JSONSearchParser } from "@sillvva/search/json";
  *
