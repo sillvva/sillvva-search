@@ -17,9 +17,9 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "link": "npm run build && npm link",
+    "link": "pnpm build && pnpm link",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "pnpm build",
     "typecheck": "tsc --noEmit"
   },
   "repository": {
