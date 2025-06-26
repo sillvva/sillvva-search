@@ -1,7 +1,6 @@
 This package provides utilities for parsing and analyzing advanced search query strings, including tokenization and abstract syntax tree generation.
 
-# In this package
-- [In this package](#in-this-package)
+# In This Package
 - [Classes](#classes)
   - [The `AdvancedSearchParser` Class](#the-advancedsearchparser-class)
     - [Syntax Reference](#syntax-reference)
