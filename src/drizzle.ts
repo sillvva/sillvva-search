@@ -142,14 +142,19 @@ export class DrizzleSearchParser<
    * @returns The Drizzle filter object.
    */
   parseNumeric(cond: ASTCondition): TFilter | number | undefined {
-    if (cond.isNumeric && cond.operator) {
-      const op = operatorMap.get(cond.operator);
-      // If the operator is "=", return the number directly
-      if (op === "eq") return Number(cond.value);
-      // Otherwise, return the Drizzle filter object
-      return op && { [op]: Number(cond.value) } as unknown as TFilter;
-    }
-    return undefined;
+    if (!cond.isNumeric || !cond.operator) return undefined;
+
+    const op = operatorMap.get(cond.operator);
+    const value = Number(cond.value);
+
+    // If the value is NaN, return undefined
+    if (isNaN(value)) return undefined;
+
+    // If the operator is "=", return the number directly
+    if (op === "eq") return value;
+    
+    // Otherwise, return the Drizzle filter object
+    return op && { [op]: value } as unknown as TFilter;
   }
 
   /**
