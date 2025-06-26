@@ -16,7 +16,7 @@ This package provides utilities for parsing and analyzing advanced search query 
 
 ## The `AdvancedSearchParser` Class
 
-This is a base class intended for creating a parser class for more specific use cases. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle. See the [`DrizzleSearchParser`](#drizzle-search-parser) and [`JSONSearchParser`](#json-search-parser) classes for examples.
+This is a base class intended for creating a parser class for more specific use cases. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle. See the [`DrizzleSearchParser`](#the-drizzlesearchparser-class) and [`JSONSearchParser`](#the-jsonsearchparser-class) classes for examples.
 
 ```ts
 import { AdvancedSearchParser } from "@sillvva/search";
@@ -75,7 +75,7 @@ console.log(result.astConditions);
 
 #### `type Token`
 
-The tokens represent the various syntax components detailed above. The protected `parse` method of the [`AdvancedSearchParser`](#advanced-search-parser), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
+The tokens represent the various syntax components detailed above. The protected `parse` method of the [`AdvancedSearchParser`](#the-advancedsearchparser-class), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
 
 ```ts
 /**
@@ -141,7 +141,7 @@ interface ConditionNode {
 
 #### `interface ASTCondition`
 
-The `ASTCondition` type is a flattened object representing condition nodes from the abstract syntax tree. In the [DrizzleSearchParser](#drizzle-search-parser), the parser function you provide uses this type as its only parameter for converting AST nodes into Drizzle-compatible filter objects.
+The `ASTCondition` type is a flattened object representing condition nodes from the abstract syntax tree. In the [DrizzleSearchParser](#the-drizzlesearchparser-class), the parser function you provide uses this type as its only parameter for converting AST nodes into Drizzle-compatible filter objects.
 
 ```ts
 /**
@@ -165,7 +165,7 @@ export interface ASTCondition {
 
 ## The `JSONSearchParser` Class
 
-`JSONSearchParser` is a class that extends the [`AdvancedSearchParser`](#advanced-search-parser) class and provides a filter method that filters an array of JSON data using a search query.
+`JSONSearchParser` is a class that extends the [`AdvancedSearchParser`](#the-advancedsearchparser-class) class and provides a filter method that filters an array of JSON data using a search query.
 
 ```ts
 const query = new JSONSearchParser(books, { validKeys: ["title", "author"] });
@@ -174,7 +174,7 @@ const filteredBooks = query.filter('author:Tolkien -title:"The Hobbit"');
 
 ## The `DrizzleSearchParser` Class
 
-`DrizzleSearchParser` is a class that extends the [`AdvancedSearchParser`](#advanced-search-parser) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the v2 relational query builder. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
+`DrizzleSearchParser` is a class that extends the [`AdvancedSearchParser`](#the-advancedsearchparser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the v2 relational query builder. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
 
 The class requires two type parameters:
 - The relations from the `defineRelations` function in Drizzle's RQB v2.
