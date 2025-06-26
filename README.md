@@ -1,12 +1,16 @@
 This package provides utilities for parsing and analyzing advanced search query strings, including tokenization and abstract syntax tree generation.
 
 # In this package
-- Classes
-  - [`AdvancedSearchParser`](#advanced-search-parser)
+- [In this package](#in-this-package)
+- [Classes](#classes)
+  - [The `AdvancedSearchParser` Class](#the-advancedsearchparser-class)
     - [Syntax Reference](#syntax-reference)
     - [Type Reference](#type-reference)
-  - [`JSONSearchParser`](#json-search-parser)
-  - [`DrizzleSearchParser`](#drizzle-search-parser)
+      - [`type Token`](#type-token)
+      - [`type ASTNode`](#type-astnode)
+      - [`interface ASTCondition`](#interface-astcondition)
+  - [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
+  - [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
 
 # Classes
 
