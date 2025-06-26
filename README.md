@@ -67,7 +67,7 @@ console.log(result.astConditions);
 | `(...)` | Tokens can be grouped together using round brackets (parentheses). Groups can also be nested. |
 | `-` | The negator character (dash or minus) can be used to negate a "word", "keyword", "phrase", "keyword_phrase", "regex", or "keyword_regex" token. Example: `-word -"phrase"`<br><br>It can also be used to negate a group. Example: `-(word1 OR word2)` |
 
-### Type Refernce
+### Type Reference
 
 #### `type Token`
 
