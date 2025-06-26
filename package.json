@@ -1,6 +1,6 @@
 {
   "name": "@sillvva/search",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A parser and analyzer for advanced search queries, supporting tokenization, abstract syntax tree generation, and condition extraction.",
   "keywords": [
     "search",
@@ -33,16 +33,16 @@
   "homepage": "https://github.com/sillvva/sillvva-search#readme",
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
-      "default": "./dist/index.mjs"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./json": {
-      "types": "./dist/json.d.mts",
-      "default": "./dist/json.mjs"
+      "types": "./dist/json.d.ts",
+      "default": "./dist/json.js"
     },
     "./drizzle": {
-      "types": "./dist/drizzle.d.mts",
-      "default": "./dist/drizzle.mjs"
+      "types": "./dist/drizzle.d.ts",
+      "default": "./dist/drizzle.js"
     }
   },
   "files": [

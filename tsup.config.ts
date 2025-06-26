@@ -6,7 +6,7 @@ export default defineConfig({
     json: "src/json.ts",
     drizzle: "src/drizzle.ts",
   },
-  format: ["esm"],
+  format: ["cjs","esm"],
   dts: true,
   splitting: false,
   sourcemap: true,
