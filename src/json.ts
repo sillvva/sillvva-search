@@ -1,7 +1,14 @@
 /**
  * @module
  * This module provides a JSON search utility that extends {@linkcode AdvancedSearchParser} to filter arrays of JSON data using advanced search queries.
- *
+ * ```
+ */
+import { AdvancedSearchParser, type ASTNode } from "./index";
+
+/**
+ * A parser for filtering arrays of JSON data using advanced search queries.
+ * @typeParam T - The type of the JSON objects in the array.
+ * 
  * @example
  * ## JSONSearchParser Example
  * ```ts
@@ -20,13 +27,6 @@
  * const parser = new JSONSearchParser(books, { validKeys: ["title", "author"], defaultKey: "title" });
  * const result = parser.filter('author:Tolkien');
  * // result: [{ title: "The Hobbit", author: "Tolkien" }]
- * ```
- */
-import { AdvancedSearchParser, type ASTNode } from "./index";
-
-/**
- * A parser for filtering arrays of JSON data using advanced search queries.
- * @typeParam T - The type of the JSON objects in the array.
  */
 export class JSONSearchParser<T extends Record<any, any>> extends AdvancedSearchParser {
   private data: T[];

@@ -1,6 +1,6 @@
 {
   "name": "sillvva-search",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A parser and analyzer for advanced search queries, supporting tokenization, AST generation, and condition extraction.",
   "keywords": [
     "search",
