@@ -53,7 +53,7 @@
  * @example
  * ## DrizzleSearchParser
  *
- * DrizzleSearchParser is a class that extends the {@linkcode AdvancedSearchParser} class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object.
+ * DrizzleSearchParser is a class that extends the {@linkcode AdvancedSearchParser} class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
  *
  * ```ts
  * import { DrizzleSearchParser } from "@sillvva/search/drizzle";
