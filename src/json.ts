@@ -1,8 +1,3 @@
-/**
- * @module
- * This module provides a JSON search utility that extends {@linkcode AdvancedSearchParser} to filter arrays of JSON data using advanced search queries.
- * ```
- */
 import { AdvancedSearchParser, type ASTNode } from "./index";
 
 /**
@@ -10,7 +5,6 @@ import { AdvancedSearchParser, type ASTNode } from "./index";
  * @typeParam T - The type of the JSON objects in the array.
  * 
  * @example
- * ## JSONSearchParser Example
  * ```ts
  * import { JSONSearchParser } from "@sillvva/search/json";
  *

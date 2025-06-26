@@ -1,93 +1,4 @@
 /**
- * This module provides utilities for parsing and analyzing advanced search queries, including tokenization and abstract syntax tree generation.
- *
- * @example
- * ## AdvancedSearchParser
- *
- * This is a base class intended for creating a parser class. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle. See the {@linkcode DrizzleSearchParser} and {@linkcode JSONSearchParser} classes for examples.
- *
- * ```ts
- * import { AdvancedSearchParser } from "@sillvva/search";
- *
- * const query = new AdvancedSearchParser({ validKeys: ["title", "author"] });
- * const result = query.parse('author:Tolkien -title:"The Hobbit"');
- * 
- * console.log(result.tokens);
- * console.log(result.ast);
- * console.log(result.astConditions);
- * ```
- * ### Tokens
- * ```js
- * [
- *   { type: 'keyword', key: 'author', value: 'Tolkien' },
- *   { type: 'negation' },
- *   { type: 'keyword_phrase', key: 'title', value: 'The Hobbit' }
- * ]
- * ```
- * ### Abstract Syntax Tree
- * ```js
- * {
- *   type: 'binary',
- *   operator: 'AND',
- *   left: { type: 'condition', token: 'keyword', key: 'author', value: 'Tolkien' },
- *   right: { type: 'condition', token: 'keyword_phrase', key: 'title', value: 'The Hobbit', negated: true }
- * }
- * ```
- * ### AST Conditions
- * ```js
- * [
- *   { key: 'author', value: 'Tolkien', isRegex: false, isNegated: false, isNumeric: false },
- *   { key: 'title', value: 'The Hobbit', isRegex: false, isNegated: true, isNumeric: false }
- * ]
- * ```
- *
- * @example
- * ## JSONSearchParser
- *
- * JSONSearchParser is a class that extends the {@linkcode AdvancedSearchParser} class and provides a filter method that filters an array of JSON data using a search query.
- *
- * ```ts
- * const query = new JSONSearchParser(books, { validKeys: ["title", "author"] });
- * const filteredBooks = query.filter('author:Tolkien -title:"The Hobbit"');
- * ```
- *
- * @example
- * ## DrizzleSearchParser
- *
- * DrizzleSearchParser is a class that extends the {@linkcode AdvancedSearchParser} class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
- *
- * ```ts
- * import { DrizzleSearchParser } from "@sillvva/search/drizzle";
- * import { relations } from "./schema";
- *
- * // Instantiate the parser
- * const parser = new DrizzleSearchParser<typeof relations, "user">((cond) => {
- *   if (cond.key === "name") {
- *     return { name: { ilike: `%${cond.value}%` } };
- *   }
- *   if (cond.key === "age") {
- *     const op = parser.parseNumeric(cond);
- *     return op && { age: op };
- *   }
- *   return undefined;
- * }, { validKeys: ["name", "age"] });
- *
- * // Parse a query string ✅
- * const { where } = parser.parseDrizzle("name:John AND age>=30");
- * // where: { AND: [{ name: { ilike: "%John%" } }, { age: { gte: 30 } }] }
- *
- * // Invalid age ❌
- * const { where } = parser.parseDrizzle("name:John age:thirty");
- * // where: { AND: [{ name: { ilike: "%John%" } }] }
- *
- * // Usage
- * const users = await db.query.user.findMany({ where });
- * ```
- * 
- * @module
- */
-
-/**
  * Represents a logical operator in a search query.
  */
 type Operator = "AND" | "OR";
@@ -178,7 +89,43 @@ export interface AdvancedSearchParserOptions {
 /**
  * A parser and analyzer for advanced search queries. Supports tokenization and abstract syntax tree generation.
  *
- * This is a base class for creating a parser class. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle.
+ * This is a base class intended for creating a parser class. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle.
+ *
+ * @example
+ * ```ts
+ * import { AdvancedSearchParser } from "@sillvva/search";
+ *
+ * const query = new AdvancedSearchParser({ validKeys: ["title", "author"] });
+ * const result = query.parse('author:Tolkien -title:"The Hobbit"');
+ * 
+ * console.log(result.tokens);
+ * console.log(result.ast);
+ * console.log(result.astConditions);
+ * ```
+ * ### Tokens
+ * ```js
+ * [
+ *   { type: 'keyword', key: 'author', value: 'Tolkien' },
+ *   { type: 'negation' },
+ *   { type: 'keyword_phrase', key: 'title', value: 'The Hobbit' }
+ * ]
+ * ```
+ * ### Abstract Syntax Tree
+ * ```js
+ * {
+ *   type: 'binary',
+ *   operator: 'AND',
+ *   left: { type: 'condition', token: 'keyword', key: 'author', value: 'Tolkien' },
+ *   right: { type: 'condition', token: 'keyword_phrase', key: 'title', value: 'The Hobbit', negated: true }
+ * }
+ * ```
+ * ### AST Conditions
+ * ```js
+ * [
+ *   { key: 'author', value: 'Tolkien', isRegex: false, isNegated: false, isNumeric: false },
+ *   { key: 'title', value: 'The Hobbit', isRegex: false, isNegated: true, isNumeric: false }
+ * ]
+ * ```
  */
 export class AdvancedSearchParser {
 	/**

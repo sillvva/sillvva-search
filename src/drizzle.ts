@@ -1,8 +1,3 @@
-/**
- * @module
- * This module provides a Drizzle ORM search utility that extends {@linkcode AdvancedSearchParser} to parse advanced search queries into Drizzle-compatible filter objects. 
- */
-
 import type {
   ExtractTablesWithRelations,
   Relations,
@@ -33,7 +28,6 @@ const operatorMap = new Map<NumericOperator, DrizzleOperator>([
  * @typeParam TableName - The name of the table to search. See {@linkcode AdvancedSearchParserOptions}
  *
  * @example
- * ## DrizzleSearchParser Example
  * You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
  * 
  * ```ts
