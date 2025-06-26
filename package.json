@@ -24,7 +24,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sillvva/sillvva-search.git",
+    "url": "git+https://github.com/sillvva/sillvva-search.git",
     "directory": "."
   },
   "bugs": {
@@ -33,16 +33,16 @@
   "homepage": "https://github.com/sillvva/sillvva-search#readme",
   "exports": {
     ".": {
-      "default": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     },
     "./json": {
-      "default": "./dist/json.mjs",
-      "types": "./dist/json.d.mts"
+      "types": "./dist/json.d.mts",
+      "default": "./dist/json.mjs"
     },
     "./drizzle": {
-      "default": "./dist/drizzle.mjs",
-      "types": "./dist/drizzle.d.mts"
+      "types": "./dist/drizzle.d.mts",
+      "default": "./dist/drizzle.mjs"
     }
   },
   "files": [
