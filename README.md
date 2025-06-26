@@ -4,6 +4,7 @@ This package provides utilities for parsing and analyzing advanced search query 
 - Classes
   - [`AdvancedSearchParser`](#advanced-search-parser)
     - [Syntax Reference](#syntax-reference)
+    - [Type Reference](#type-reference)
   - [`JSONSearchParser`](#json-search-parser)
   - [`DrizzleSearchParser`](#drizzle-search-parser)
 
@@ -65,6 +66,98 @@ console.log(result.astConditions);
 | `AND` and `OR` | You can use `AND` and `OR` operators between tokens. When no provider is specified, `AND` is implied. |
 | `(...)` | Tokens can be grouped together using round brackets (parentheses). Groups can also be nested. |
 | `-` | The negator character (dash or minus) can be used to negate a "word", "keyword", "phrase", "keyword_phrase", "regex", or "keyword_regex" token. Example: `-word -"phrase"`<br><br>It can also be used to negate a group. Example: `-(word1 OR word2)` |
+
+### Type Refernce
+
+#### `type Token`
+
+The tokens represent the various syntax components detailed above. The protected `parse` method of the [`AdvancedSearchParser`](#advanced-search-parser), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
+
+```ts
+/**
+ * Represents a logical operator in a search query.
+ */
+type Operator = "AND" | "OR";
+
+/**
+ * Represents a numeric operator in a search query.
+ */
+export type NumericOperator = "=" | ">" | "<" | ">=" | "<=";
+
+/**
+ * Represents a token parsed from the search query string.
+ */
+export type Token =
+	| { type: "keyword"; key: string; value: string }
+	| { type: "keyword_phrase"; key: string; value: string }
+	| { type: "keyword_regex"; key: string; value: string }
+	| { type: "keyword_numeric"; key: string; operator: NumericOperator; value: number }
+	| { type: "word"; value: string }
+	| { type: "phrase"; value: string }
+	| { type: "regex"; value: string }
+	| { type: "operator"; value: Operator }
+	| { type: "open_paren"; negated?: boolean }
+	| { type: "close_paren" }
+	| { type: "negation" };
+```
+
+#### `type ASTNode`
+
+The abstract syntax tree is represented by the `ASTNode` type, which is a type that recursively references itself for nested conditions.
+
+```ts
+/**
+ * Represents a node in the abstract syntax tree (AST) for a search query.
+ */
+export type ASTNode = BinaryNode | ConditionNode;
+
+/**
+ * A binary node in the AST, representing a logical operation (AND/OR) between two nodes.
+ */
+interface BinaryNode {
+	type: "binary";
+	operator: Operator;
+	left: ASTNode;
+	right: ASTNode;
+	negated?: boolean;
+}
+
+/**
+ * A condition node in the AST, representing a single search condition.
+ */
+interface ConditionNode {
+	type: "condition";
+	token: ConditionToken;
+	key?: string;
+	value: string | number;
+	negated?: boolean;
+	operator?: NumericOperator;
+}
+```
+
+#### `interface ASTCondition`
+
+The `ASTCondition` type is a flattened object representing condition nodes from the abstract syntax tree. In the [DrizzleSearchParser](#drizzle-search-parser), the parser function you provide uses this type as its only parameter for converting AST nodes into Drizzle-compatible filter objects.
+
+```ts
+/**
+ * Represents a flattened search condition extracted from the AST.
+ */
+export interface ASTCondition {
+	/** The key for the condition, if any (e.g., 'author'). */
+	key?: string;
+	/** The value for the condition (e.g., 'Tolkien'). */
+	value: string | number;
+	/** Whether the value is a regex pattern. */
+	isRegex: boolean;
+	/** Whether the condition is negated. */
+	isNegated: boolean;
+	/** Whether the condition is numeric. */
+	isNumeric: boolean;
+	/** The numeric operator, if applicable. */
+	operator?: NumericOperator;
+}
+```
 
 ## The `JSONSearchParser` Class
 
