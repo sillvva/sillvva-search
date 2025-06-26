@@ -11,6 +11,7 @@
  *
  * const query = new AdvancedSearchParser({ validKeys: ["title", "author"] });
  * const result = query.parse('author:Tolkien -title:"The Hobbit"');
+ * 
  * console.log(result.tokens);
  * console.log(result.ast);
  * console.log(result.astConditions);
@@ -35,8 +36,8 @@
  * ### AST Conditions
  * ```js
  * [
- *   { key: 'author', value: 'Tolkien', isRegex: false, isNegated: false },
- *   { key: 'title', value: 'The Hobbit', isRegex: false, isNegated: true }
+ *   { key: 'author', value: 'Tolkien', isRegex: false, isNegated: false, isNumeric: false },
+ *   { key: 'title', value: 'The Hobbit', isRegex: false, isNegated: true, isNumeric: false }
  * ]
  * ```
  *

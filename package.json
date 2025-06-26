@@ -1,15 +1,53 @@
 {
-  "name": "sillvva-search",
-  "version": "0.1.5",
-  "description": "A parser and analyzer for advanced search queries, supporting tokenization, AST generation, and condition extraction.",
+  "name": "@sillvva/search",
+  "version": "0.2.0",
+  "description": "A parser and analyzer for advanced search queries, supporting tokenization, abstract syntax tree generation, and condition extraction.",
   "keywords": [
     "search",
+    "query",
+    "filter",
     "parser",
     "analyzer",
     "tokenization",
-    "AST"
+    "ast",
+    "database",
+    "orm"
   ],
   "author": "Matt DeKok",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "link": "npm run build && npm link",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sillvva/sillvva-search.git",
+    "directory": "."
+  },
+  "bugs": {
+    "url": "https://github.com/sillvva/sillvva-search/issues"
+  },
+  "homepage": "https://github.com/sillvva/sillvva-search#readme",
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./json": {
+      "default": "./dist/json.mjs",
+      "types": "./dist/json.d.mts"
+    },
+    "./drizzle": {
+      "default": "./dist/drizzle.mjs",
+      "types": "./dist/drizzle.d.mts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "peerDependencies": {
     "drizzle-orm": ">=1.0.0-beta.1"
   },
@@ -19,7 +57,8 @@
     }
   },
   "devDependencies": {
-    "drizzle-orm": "^1.0.0-beta.1"
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
   },
   "license": "MIT",
   "packageManager": "pnpm@10.11.0"
