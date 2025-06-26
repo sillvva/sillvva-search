@@ -141,9 +141,12 @@ export class DrizzleSearchParser<
    * @param cond - The {@linkcode ASTCondition} to parse.
    * @returns The Drizzle filter object.
    */
-  parseNumeric(cond: ASTCondition): TFilter | undefined {
+  parseNumeric(cond: ASTCondition): TFilter | number | undefined {
     if (cond.isNumeric && cond.operator) {
       const op = operatorMap.get(cond.operator);
+      // If the operator is "=", return the number directly
+      if (op === "eq") return Number(cond.value);
+      // Otherwise, return the Drizzle filter object
       return op && { [op]: Number(cond.value) } as unknown as TFilter;
     }
     return undefined;

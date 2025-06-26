@@ -1,7 +1,7 @@
 /**
  * Represents a logical operator in a search query.
  */
-type Operator = "AND" | "OR";
+export type LogicalOperator = "AND" | "OR";
 
 /**
  * Represents a numeric operator in a search query.
@@ -19,7 +19,7 @@ export type Token =
 	| { type: "word"; value: string }
 	| { type: "phrase"; value: string }
 	| { type: "regex"; value: string }
-	| { type: "operator"; value: Operator }
+	| { type: "operator"; value: LogicalOperator }
 	| { type: "open_paren"; negated?: boolean }
 	| { type: "close_paren" }
 	| { type: "negation" };
@@ -36,7 +36,7 @@ export type ASTNode = BinaryNode | ConditionNode;
  */
 interface BinaryNode {
 	type: "binary";
-	operator: Operator;
+	operator: LogicalOperator;
 	left: ASTNode;
 	right: ASTNode;
 	negated?: boolean;
@@ -227,7 +227,7 @@ export class AdvancedSearchParser {
 
 				if (currentToken?.type === "close_paren") break;
 
-				let operator: Operator;
+				let operator: LogicalOperator;
 				if (currentToken?.type === "operator") {
 					operator = currentToken.value;
 					index++;
