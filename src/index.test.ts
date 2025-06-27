@@ -92,12 +92,17 @@ describe("QueryParser", () => {
 
 	it("parses date operators", () => {
 		const parser = new QueryParser({ validKeys: ["created"] });
-		const result = parser["parse"]("created<2025-01-01");
+
+		// Full Date
+		const result = parser["parse"]("created<2025-05-05");
 		const token = result.tokens[0];
 		expect(token).toBeDefined();
-		if (token && token.type === "keyword_date") {
-			expect(token.value instanceof Date).toBe(true);
-			expect(token.value.toISOString()).toBe("2025-01-01T00:00:00.000Z");
+		if (token) {
+			expect(token.type).toBe("keyword_date");
+			if (token.type === "keyword_date") {
+				expect(token.value instanceof Date).toBe(true);
+				expect(token.value.toISOString()).toBe("2025-05-05T00:00:00.000Z");
+			}
 		}
 		expect(token).toMatchObject({
 			type: "keyword_date",
@@ -110,6 +115,30 @@ describe("QueryParser", () => {
 			key: "created",
 			operator: "<"
 		});
+
+		// Month
+		const result2 = parser["parse"]("created<2025-05");
+		const token2 = result2.tokens[0];
+		expect(token2).toBeDefined();
+		if (token2) {
+			expect(token2.type).toBe("keyword_date");
+			if (token2.type === "keyword_date") {
+				expect(token2.value instanceof Date).toBe(true);
+				expect(token2.value.toISOString()).toBe("2025-05-01T00:00:00.000Z");
+			}
+		}
+
+		// Year
+		const result3 = parser["parse"]("created<2025");
+		const token3 = result3.tokens[0];
+		expect(token3).toBeDefined();
+		if (token3) {
+			expect(token3.type).toBe("keyword_date");
+			if (token3.type === "keyword_date") {
+				expect(token3.value instanceof Date).toBe(true);
+				expect(token3.value.toISOString()).toBe("2025-01-01T00:00:00.000Z");
+			}
+		}
 	});
 
 	it("parses regex queries", () => {
