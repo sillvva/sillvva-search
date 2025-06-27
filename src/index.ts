@@ -131,10 +131,6 @@ export interface QueryParserOptions {
  * ```
  */
 export class QueryParser {
-	/**
-	 * Create a new QueryParser parser.
-	 * @param options Configuration options for the parser.
-	 */
 	constructor(protected options?: QueryParserOptions) {}
 
 	// Convert query to tokens

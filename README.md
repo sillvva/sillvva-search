@@ -103,7 +103,7 @@ console.log(result.astConditions);
 
 #### `type Token`
 
-The tokens represent the various syntax components detailed above. The protected `parse` method of the [`QueryParser`](#the-QueryParser-class), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
+The tokens represent the various syntax components detailed above. The protected `parse` method of the [`QueryParser`](#the-queryparser-class), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
 
 ```ts
 export type LogicalOperator = "AND" | "OR";
@@ -174,7 +174,7 @@ export interface ASTCondition {
 
 ## The `JSONSearchParser` Class
 
-`JSONSearchParser` is a class that extends the [`QueryParser`](#the-QueryParser-class) class and provides a filter method that filters an array of JSON data using a search query.
+`JSONSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a filter method that filters an array of JSON data using a search query.
 
 ```ts
 const query = new JSONSearchParser(books, { validKeys: ["title", "author"] });
@@ -183,7 +183,7 @@ const filteredBooks = query.filter('author:Tolkien -title:"The Hobbit"');
 
 ## The `DrizzleSearchParser` Class
 
-`DrizzleSearchParser` is a class that extends the [`QueryParser`](#the-QueryParser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the v2 relational query builder. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
+`DrizzleSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the v2 relational query builder. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
 
 The class requires two type parameters:
 
