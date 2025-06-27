@@ -145,7 +145,6 @@ export class QueryParser {
     
 		while (match = regex.exec(query)) {
       const [, open, close, negation, keywordNumeric, operator, dateValue, numericValue, keyword, value, quote, regex] = match;
-      console.log({ open, close, negation, keywordNumeric, operator, dateValue, numericValue, keyword, value, quote, regex });
 
 			if (open) {
 				tokens.push({ type: "open_paren", negated: open.startsWith("-") });
