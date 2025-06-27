@@ -1,6 +1,7 @@
 This package provides utilities for parsing and analyzing advanced search query strings, including tokenization and abstract syntax tree generation.
 
-# In This Package
+# Table of Contents
+- [Installation](#installation)
 - [Classes](#classes)
 	- [The `AdvancedSearchParser` Class](#the-advancedsearchparser-class)
 		- [Syntax Reference](#syntax-reference)
@@ -10,6 +11,18 @@ This package provides utilities for parsing and analyzing advanced search query 
 			- [`interface ASTCondition`](#interface-astcondition)
 	- [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
 	- [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
+
+# Installation
+
+Install the package using your preferred package manager:
+
+```sh
+npm install @sillvva/search
+
+pnpm add @sillvva/search
+
+bun add @sillvva/search
+```
 
 # Classes
 
