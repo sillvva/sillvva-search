@@ -125,8 +125,8 @@ export interface QueryParserOptions {
  * ### AST Conditions
  * ```js
  * [
- *   { key: 'author', value: 'Tolkien', isRegex: false, isNegated: false, isNumeric: false },
- *   { key: 'title', value: 'The Hobbit', isRegex: false, isNegated: true, isNumeric: false }
+ *   { key: 'author', value: 'Tolkien', isNegated: false, isRegex: false, isNumeric: false, isDate: false },
+ *   { key: 'title', value: 'The Hobbit', isNegated: true, isRegex: false, isNumeric: false, isDate: false }
  * ]
  * ```
  */
