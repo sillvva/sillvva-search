@@ -53,24 +53,45 @@ export class JSONSearchParser<T extends Record<any, any>> extends QueryParser {
         }
       } else {
         match = false;
-        if (ast.token === "keyword_numeric") {
+        if (ast.token === "keyword_numeric" || ast.token === "keyword_date") {
           switch (ast.operator) {
             case "=":
-              match = Number(value) === Number(ast.value);
+              if (ast.token === "keyword_numeric" && typeof ast.value === "number") {
+                match = Number(value) === Number(ast.value);
+              } else if (ast.token === "keyword_date" && ast.value instanceof Date && typeof value === "string") {
+                match = new Date(value).getTime() === ast.value.getTime();
+              }
               break;
             case ">":
-              match = Number(value) > Number(ast.value);
+              if (ast.token === "keyword_numeric" && typeof ast.value === "number") {
+                match = Number(value) > Number(ast.value);
+              } else if (ast.token === "keyword_date" && ast.value instanceof Date && typeof value === "string") {
+                match = new Date(value) > ast.value;
+              }
               break;
             case "<":
-              match = Number(value) < Number(ast.value);
+              if (ast.token === "keyword_numeric" && typeof ast.value === "number") {
+                match = Number(value) < Number(ast.value);
+              } else if (ast.token === "keyword_date" && ast.value instanceof Date && typeof value === "string") {
+                match = new Date(value) < ast.value;
+              }
               break;
             case ">=":
-              match = Number(value) >= Number(ast.value);
+              if (ast.token === "keyword_numeric" && typeof ast.value === "number") {
+                match = Number(value) >= Number(ast.value);
+              } else if (ast.token === "keyword_date" && ast.value instanceof Date && typeof value === "string") {
+                match = new Date(value) >= ast.value;
+              }
               break;
             case "<=":
-              match = Number(value) <= Number(ast.value);
+              if (ast.token === "keyword_numeric" && typeof ast.value === "number") {
+                match = Number(value) <= Number(ast.value);
+              } else if (ast.token === "keyword_date" && ast.value instanceof Date && typeof value === "string") {
+                match = new Date(value) <= ast.value;
+              }
               break;
           }
+
         } else {
           match = String(value).toLowerCase().includes(String(ast.value).toLowerCase());
         }
