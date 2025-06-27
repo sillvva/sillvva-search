@@ -1,4 +1,21 @@
-This package provides utilities for parsing and analyzing advanced search query strings, including tokenization and abstract syntax tree generation.
+# Introduction
+
+This package provides a solution for implementing advanced search functionalities within your applications. At its core is the `AdvancedSearchParser` class, a powerful class built to parse complex search queries into a structured, easily consumable format.
+
+Users often need to specify more nuanced criteria than basic keyword seaches, such as searching within specific fields, excluding certain terms, or applying logical operators (AND, OR, NOT). Parsing these types of queries can be tricky. Some websites, like [The Gatherer](https://gatherer.wizards.com/advanced-search) (Magic the Gathering's card database), choose to provide "Advanced Search" forms that provide multiple fields for the user to filter the search results. Others like [Scryfall](https://scryfall.com/docs/syntax) choose to provide a single field that interprets human-readable query strings with custom syntax into actual search results.
+
+The latter option is what `AdvancedSearchParser` was designed to do. It addresses this need by providing a programmatic way to interpret human-readable query strings. Included is a custom search syntax that features:
+
+> - **Phrase matching:** e.g., `title:"deep learning"`
+> - **Field-specific searches:** e.g., `author:"John Doe"`
+> - **Exclusions:** e.g., `-"draft"`
+> - **Logical operators and grouping:** e.g., `(status:published AND category:technology) OR tag:AI`
+> - **Numerical operators:** e.g., `age>=30`
+> - **Regular expressions:** e.g., `author:/John (Doe|Smith)/`
+
+By transforming these complex strings into a structured representation like an Abstract Syntax Tree, `AdvancedSearchParser` simplifies the subsequent steps of building database queries, filtering data, or highlighting search results. This separation of concerns — parsing the query from executing the search — makes your search logic cleaner, more maintainable, and less prone to errors.
+
+While the package includes other classes, such as `JSONSearchParser` and `DrizzleSearchParser`, these are primarily illustrative examples demonstrating how you can integrate `AdvancedSearchParser` into different search scenarios. The true value and primary focus of `@sillvva/search` is the `AdvancedSearchParser` class.
 
 # Table of Contents
 - [Installation](#installation)
@@ -11,6 +28,7 @@ This package provides utilities for parsing and analyzing advanced search query 
 			- [`interface ASTCondition`](#interface-astcondition)
 	- [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
 	- [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
+- [Roadmap](#roadmap)
 
 # Installation
 
@@ -119,11 +137,11 @@ export type Token =
 
 #### `type ASTNode`
 
-The abstract syntax tree is represented by the `ASTNode` type, which is a type that recursively references itself for nested conditions.
+The Abstract Syntax Tree is represented by the `ASTNode` type, which is a type that recursively references itself for nested conditions.
 
 ```ts
 /**
- * Represents a node in the abstract syntax tree (AST) for a search query.
+ * Represents a node in the Abstract Syntax Tree (AST) for a search query.
  */
 export type ASTNode = BinaryNode | ConditionNode;
 
@@ -153,7 +171,7 @@ interface ConditionNode {
 
 #### `interface ASTCondition`
 
-The `ASTCondition` type is a flattened object representing condition nodes from the abstract syntax tree. In the [DrizzleSearchParser](#the-drizzlesearchparser-class), the parser function you provide uses this type as its only parameter for converting AST nodes into Drizzle-compatible filter objects.
+The `ASTCondition` type is a flattened object representing condition nodes from the Abstract Syntax Tree. In the [DrizzleSearchParser](#the-drizzlesearchparser-class), the parser function you provide uses this type as its only parameter for converting AST nodes into Drizzle-compatible filter objects.
 
 ```ts
 /**
@@ -198,7 +216,7 @@ The constructor takes two parameters:
 	- `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
 	- `defaultKey` allows you to define a default key for "word" tokens as defined in the [syntax reference](#syntax-reference).
 
-The `parseDrizzle` method returns the `tokens`, abstract syntax tree (`ast`), the AST conditions (`astConditions`), and the `where` object.
+The `parseDrizzle` method returns the `tokens`, Abstract Syntax Tree (`ast`), the AST conditions (`astConditions`), and the `where` object.
 
 ```ts
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
@@ -227,3 +245,9 @@ const { where } = parser.parseDrizzle("name:John age:thirty");
 // Usage
 const users = await db.query.user.findMany({ where });
 ```
+
+# Roadmap
+
+In the future I plan to experiment with to possibly add some of the following features:
+
+> Coming soon
