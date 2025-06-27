@@ -2,14 +2,14 @@ This package provides utilities for parsing and analyzing advanced search query 
 
 # In This Package
 - [Classes](#classes)
-  - [The `AdvancedSearchParser` Class](#the-advancedsearchparser-class)
-    - [Syntax Reference](#syntax-reference)
-    - [Type Reference](#type-reference)
-      - [`type Token`](#type-token)
-      - [`type ASTNode`](#type-astnode)
-      - [`interface ASTCondition`](#interface-astcondition)
-  - [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
-  - [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
+	- [The `AdvancedSearchParser` Class](#the-advancedsearchparser-class)
+		- [Syntax Reference](#syntax-reference)
+		- [Type Reference](#type-reference)
+			- [`type Token`](#type-token)
+			- [`type ASTNode`](#type-astnode)
+			- [`interface ASTCondition`](#interface-astcondition)
+	- [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
+	- [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
 
 # Classes
 
@@ -80,7 +80,7 @@ The tokens represent the various syntax components detailed above. The protected
 /**
  * Represents a logical operator in a search query.
  */
-type Operator = "AND" | "OR";
+export type LogicalOperator = "AND" | "OR";
 
 /**
  * Represents a numeric operator in a search query.
@@ -98,7 +98,7 @@ export type Token =
 	| { type: "word"; value: string }
 	| { type: "phrase"; value: string }
 	| { type: "regex"; value: string }
-	| { type: "operator"; value: Operator }
+	| { type: "operator"; value: LogicalOperator }
 	| { type: "open_paren"; negated?: boolean }
 	| { type: "close_paren" }
 	| { type: "negation" };
@@ -119,7 +119,7 @@ export type ASTNode = BinaryNode | ConditionNode;
  */
 interface BinaryNode {
 	type: "binary";
-	operator: Operator;
+	operator: LogicalOperator;
 	left: ASTNode;
 	right: ASTNode;
 	negated?: boolean;
