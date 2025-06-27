@@ -1,12 +1,10 @@
 # Introduction
 
-This package provides a solution for implementing advanced search functionalities within your applications. At its core is the `AdvancedSearchParser` class, a powerful class built to parse complex search queries into a structured, easily consumable format.
+Users often need to specify more nuanced criteria than basic keyword seaches, such as searching within specific fields, excluding certain terms, or applying logical operators (AND, OR, NOT). Parsing these types of queries can be tricky. Some websites, like [The Gatherer](https://gatherer.wizards.com/advanced-search) (Magic the Gathering's card database), choose to provide "Advanced Search" forms that provide multiple fields for the user to filter the search results. Others like [Scryfall](https://scryfall.com/docs/syntax) choose to provide a single field that interprets human-readable query strings with a custom syntax into search results.
 
-Users often need to specify more nuanced criteria than basic keyword seaches, such as searching within specific fields, excluding certain terms, or applying logical operators (AND, OR, NOT). Parsing these types of queries can be tricky. Some websites, like [The Gatherer](https://gatherer.wizards.com/advanced-search) (Magic the Gathering's card database), choose to provide "Advanced Search" forms that provide multiple fields for the user to filter the search results. Others like [Scryfall](https://scryfall.com/docs/syntax) choose to provide a single field that interprets human-readable query strings with custom syntax into actual search results.
+The latter option is what `AdvancedSearchParser` was designed to assist with. It addresses this need by providing a programmatic way to interpret human-readable query strings into a structured, easily consumable format. Included is a custom search syntax that features:
 
-The latter option is what `AdvancedSearchParser` was designed to do. It addresses this need by providing a programmatic way to interpret human-readable query strings. Included is a custom search syntax that features:
-
-> - **Phrase matching:** e.g., `title:"deep learning"`
+> - **Word or phrase matching:** e.g., `ai "deep learning"`
 > - **Field-specific searches:** e.g., `author:"John Doe"`
 > - **Exclusions:** e.g., `-"draft"`
 > - **Logical operators and grouping:** e.g., `(status:published AND category:technology) OR tag:AI`
