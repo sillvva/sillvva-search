@@ -16,16 +16,17 @@ By transforming these complex strings into a structured representation like an A
 While the package includes other classes, such as `JSONSearchParser` and `DrizzleSearchParser`, these are primarily illustrative examples demonstrating how you can integrate `QueryParser` into different search scenarios. The true value and primary focus of `@sillvva/search` is the `QueryParser` class.
 
 # Table of Contents
+
 - [Installation](#installation)
 - [Classes](#classes)
-	- [The `QueryParser` Class](#the-queryparser-class)
-		- [Syntax Reference](#syntax-reference)
-		- [Type Reference](#type-reference)
-			- [`type Token`](#type-token)
-			- [`type ASTNode`](#type-astnode)
-			- [`interface ASTCondition`](#interface-astcondition)
-	- [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
-	- [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
+  - [The `QueryParser` Class](#the-queryparser-class)
+    - [Syntax Reference](#syntax-reference)
+    - [Type Reference](#type-reference)
+      - [`type Token`](#type-token)
+      - [`type ASTNode`](#type-astnode)
+      - [`interface ASTCondition`](#interface-astcondition)
+  - [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
+  - [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
 
 # Installation
 
@@ -55,7 +56,7 @@ console.log(result.tokens);
 console.log(result.ast);
 console.log(result.astConditions);
 
-/** 
+/**
  * Tokens
  * [
  *   { type: 'keyword', key: 'author', value: 'Tolkien' },
@@ -64,7 +65,7 @@ console.log(result.astConditions);
  * ]
  */
 
-/** 
+/**
  * Abstract Syntax Tree
  * {
  *   type: 'binary',
@@ -85,18 +86,18 @@ console.log(result.astConditions);
 
 ### Syntax Reference
 
-| Syntax                                                     | Description                                                |
-| ---------------------------------------------------------- | ---------------------------------------------------------- |
-| `word` | A single word will be parsed as a "word" token with no key. A `defaultKey` can be provided in the class options parameter. |
-| `key:word` | A keyword includes a specific key to associate with the word or phrase. It will be parsed as a "keyword" token. |
-| `"a phrase"` | This syntax will be parsed as a "phrase" token. It allows you to join multiple words together into one token. |
-| `key:"a phrase"` | This syntax will be parsed as a "keyword_phrase" token. It combines the properties of the "keyword" and "phrase" tokens. |
-| `/^regex$/` | This syntax will be parsed as a "regex" token. The regular expression between the `/` will be provided as a string and can be converted to a `RegExp` object in JS or passed to a SQL statement using supported syntax. |
-| `key:/^regex$/` | This syntax combines the properties of the "keyword" syntax and the "regex" syntax. |
-| `key=10`<br>`key>10`<br>`key<10`<br>`key>=2024-01-01`<br>`key<=2024-12-31` | When using numeric operators and numbers or dates, the token will be treated as numeric an become a "keyword_numeric" or "keyword_date" token with the operator provided. Dates must be formatted as `YYYY-MM-DD`. |
-| `AND` and `OR` | You can use `AND` and `OR` operators between tokens. When no provider is specified, `AND` is implied. |
-| `(...)` | Tokens can be grouped together using round brackets (parentheses). Groups can also be nested. |
-| `-` | The negator character (dash or minus) can be used to negate a "word", "keyword", "phrase", "keyword_phrase", "regex", or "keyword_regex" token. Example: `-word -"phrase"`<br><br>It can also be used to negate a group. Example: `-(word1 OR word2)` |
+| Syntax                                                                     | Description                                                                                                                                                                                                                  |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `word`                                                                     | A single word will be parsed as a "word" token with no key. A `defaultKey` can be provided in the class options parameter.                                                                                                   |
+| `key:word`                                                                 | A keyword includes a specific key to associate with the word or phrase. It will be parsed as a "keyword" token.                                                                                                              |
+| `"a phrase"`                                                               | This syntax will be parsed as a "phrase" token. It allows you to join multiple words together into one token.                                                                                                                |
+| `key:"a phrase"`                                                           | This syntax will be parsed as a "keyword_phrase" token. It combines the properties of the "keyword" and "phrase" tokens.                                                                                                     |
+| `/^regex$/`                                                                | This syntax will be parsed as a "regex" token. The regular expression between the `/` will be provided as a string and can be converted to a `RegExp` constructor in JS or passed to a SQL statement using supported syntax. |
+| `key:/^regex$/`                                                            | This syntax combines the properties of the "keyword" syntax and the "regex" syntax.                                                                                                                                          |
+| `key=10`<br>`key>10`<br>`key<10`<br>`key>=2024-01-01`<br>`key<=2024-12-31` | When using numeric operators for numbers or dates, the token will become a "keyword_numeric" or "keyword_date" token with the operator provided. Dates must be formatted as `YYYY-MM-DD`, `YYYY-MM`, or `YYYY`.              |
+| `AND` and `OR`                                                             | You can use `AND` and `OR` operators between tokens. When no provider is specified, `AND` is implied.                                                                                                                        |
+| `(...)`                                                                    | Tokens can be grouped together using round brackets (parentheses). Groups can also be nested.                                                                                                                                |
+| `-`                                                                        | The negator character can be used to negate any "word", "keyword", or "phrase" token. Example: `-word -"phrase"`<br><br>It can also be used to negate a group. Example: `-(word1 OR word2)`                                  |
 
 ### Type Reference
 
@@ -185,16 +186,19 @@ const filteredBooks = query.filter('author:Tolkien -title:"The Hobbit"');
 `DrizzleSearchParser` is a class that extends the [`QueryParser`](#the-QueryParser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the v2 relational query builder. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
 
 The class requires two type parameters:
+
 - The relations from the `defineRelations` function in Drizzle's RQB v2.
 - The table name as a string constant type
 
 The constructor takes two parameters:
+
 - A function that parses individual `ASTCondition` objects into Drizzle-compatible filter objects. By providing relations to the class, the return statement will provide autocomplete as if you were building a `findFirst` or `findMany` where object directly. Returning `undefined` will remove the condition from the final where object.
 - An options object with two properties:
-	- `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
-	- `defaultKey` allows you to define a default key for "word" tokens as defined in the [syntax reference](#syntax-reference).
+  - `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
+  - `defaultKey` allows you to define a default key for "word" tokens as defined in the [syntax reference](#syntax-reference).
 
 The class has three methods:
+
 - The `parseNumeric` and `parseDate` method parses "keyword_numeric" and "keyword_date" conditions and operator to the Drizzle-compatible equivalent.
 - The `parseDrizzle` method returns the `tokens`, Abstract Syntax Tree (`ast`), the AST conditions (`astConditions`), and the Drizzle-compatible `where` object.
 
@@ -203,16 +207,19 @@ import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { relations } from "./schema";
 
 // Instantiate the parser
-const parser = new DrizzleSearchParser<typeof relations, "user">((cond) => {
-  if (cond.key === "name") {
-    return { name: { ilike: `%${cond.value}%` } };
-  }
-  if (cond.key === "age") {
-    const op = parser.parseNumeric(cond);
-    return op && { age: op };
-  }
-  return undefined;
-}, { validKeys: ["name", "age"] });
+const parser = new DrizzleSearchParser<typeof relations, "user">(
+	(cond) => {
+		if (cond.key === "name") {
+			return { name: { ilike: `%${cond.value}%` } };
+		}
+		if (cond.key === "age") {
+			const op = parser.parseNumeric(cond);
+			return op && { age: op };
+		}
+		return undefined;
+	},
+	{ validKeys: ["name", "age"] }
+);
 
 // Parse a query string ✅
 const { where } = parser.parseDrizzle("name:John AND age>=30");

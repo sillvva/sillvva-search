@@ -83,10 +83,10 @@ export interface QueryParserOptions {
 	 * An optional list of valid keys to allow in the search query. If specified, only these keys will be recognized.
 	 */
 	validKeys?: readonly string[];
-  /**
-   * An optional default key to use if no key is specified in the search query.
-   */
-  defaultKey?: string;
+	/**
+	 * An optional default key to use if no key is specified in the search query.
+	 */
+	defaultKey?: string;
 }
 
 /**
@@ -100,7 +100,7 @@ export interface QueryParserOptions {
  *
  * const query = new QueryParser({ validKeys: ["title", "author"] });
  * const result = query.parse('author:Tolkien -title:"The Hobbit"');
- * 
+ *
  * console.log(result.tokens);
  * console.log(result.ast);
  * console.log(result.astConditions);
@@ -140,11 +140,12 @@ export class QueryParser {
 	// Convert query to tokens
 	private tokenize(query: string): Token[] {
 		const tokens: Token[] = [];
-		const regex = /(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
+		const regex =
+			/(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
 		let match: RegExpExecArray | null;
-    
-		while (match = regex.exec(query)) {
-      const [, open, close, negation, keywordNumeric, operator, dateValue, numericValue, keyword, value, quote, regex] = match;
+
+		while ((match = regex.exec(query))) {
+			const [, open, close, negation, keywordNumeric, operator, dateValue, monthValue, yearValue, numericValue, keyword, value, quote, regex] = match;
 
 			if (open) {
 				tokens.push({ type: "open_paren", negated: open.startsWith("-") });
@@ -188,22 +189,54 @@ export class QueryParser {
 					operator: operator === ":" ? "=" : (operator as NumericOperator),
 					value: value
 				});
-      } else if (keywordNumeric && operator && dateValue) {
+			} else if (keywordNumeric && operator && (dateValue || monthValue || yearValue)) {
 				// Filter out invalid keys if validKeys is specified
 				if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) continue;
 
-				let value = Date.parse(dateValue);
-				if (isNaN(value)) continue;
+				let start = new Date(dateValue || monthValue || yearValue || "");
+				if (isNaN(start.getTime())) continue;
 
-				// Compare <=dates to the end of the day
-				if (operator === "<=") value += 86399999;
+				let op = operator === ":" ? "=" : (operator as NumericOperator);
+				if (op === "<" || op === ">=") {
+					tokens.push({
+						type: "keyword_date",
+						key: keywordNumeric,
+						operator: op,
+						value: start
+					});
+				} else {
+					const end = new Date(start);
+					if (dateValue) {
+						end.setDate(end.getDate() + 1);
+					} else if (monthValue) {
+						end.setMonth(end.getMonth() + 1);
+					} else {
+						end.setFullYear(end.getFullYear() + 1);
+					}
+					end.setMilliseconds(-1);
 
-        tokens.push({
-          type: "keyword_date",
-          key: keywordNumeric,
-          operator: operator === ":" ? "=" : (operator as NumericOperator),
-          value: new Date(value)
-        });
+					if (op === "<=" || op === ">") {
+						tokens.push({
+							type: "keyword_date",
+							key: keywordNumeric,
+							operator: op,
+							value: end
+						});
+					} else {
+						tokens.push({
+							type: "keyword_date",
+							key: keywordNumeric,
+							operator: ">=",
+							value: start
+						});
+						tokens.push({
+							type: "keyword_date",
+							key: keywordNumeric,
+							operator: "<=",
+							value: end
+						});
+					}
+				}
 			} else if (value) {
 				const upperValue = value.toUpperCase();
 
@@ -215,17 +248,17 @@ export class QueryParser {
 					tokens.push({ type: "word", value });
 				}
 			} else if (quote) {
-        if (this.options?.defaultKey) {
-          tokens.push({ type: "keyword_phrase", key: this.options.defaultKey, value: quote });
-        } else {
-          tokens.push({ type: "phrase", value: quote });
-        }
+				if (this.options?.defaultKey) {
+					tokens.push({ type: "keyword_phrase", key: this.options.defaultKey, value: quote });
+				} else {
+					tokens.push({ type: "phrase", value: quote });
+				}
 			} else if (regex) {
-        if (this.options?.defaultKey) {
-          tokens.push({ type: "keyword_regex", key: this.options.defaultKey, value: regex });
-        } else {
-          tokens.push({ type: "regex", value: regex });
-        }
+				if (this.options?.defaultKey) {
+					tokens.push({ type: "keyword_regex", key: this.options.defaultKey, value: regex });
+				} else {
+					tokens.push({ type: "regex", value: regex });
+				}
 			}
 		}
 
