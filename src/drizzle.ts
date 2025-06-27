@@ -104,12 +104,11 @@ export class DrizzleSearchParser<
             else return;
           }
 
-          const result =
-            node.operator === "AND"
-              ? ({ AND: [leftClause, rightClause] } as unknown as TFilter)
-              : ({ OR: [leftClause, rightClause] } as unknown as TFilter);
-
-          return result;
+          const left = leftClause[node.operator];
+          const right = rightClause[node.operator];
+          const leftArray = Array.isArray(left) ? left : [leftClause];
+          const rightArray = Array.isArray(right) ? right : [rightClause];
+          return { [node.operator]: [...leftArray, ...rightArray] } as TFilter;
 
         case "condition":
           return this.conditionBuilderFn({
