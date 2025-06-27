@@ -73,9 +73,9 @@ export interface ASTCondition {
 }
 
 /**
- * Options for configuring the AdvancedSearchParser parser.
+ * Options for configuring the QueryParser parser.
  */
-export interface AdvancedSearchParserOptions {
+export interface QueryParserOptions {
 	/**
 	 * An optional list of valid keys to allow in the search query. If specified, only these keys will be recognized.
 	 */
@@ -93,9 +93,9 @@ export interface AdvancedSearchParserOptions {
  *
  * @example
  * ```ts
- * import { AdvancedSearchParser } from "@sillvva/search";
+ * import { QueryParser } from "@sillvva/search";
  *
- * const query = new AdvancedSearchParser({ validKeys: ["title", "author"] });
+ * const query = new QueryParser({ validKeys: ["title", "author"] });
  * const result = query.parse('author:Tolkien -title:"The Hobbit"');
  * 
  * console.log(result.tokens);
@@ -127,12 +127,12 @@ export interface AdvancedSearchParserOptions {
  * ]
  * ```
  */
-export class AdvancedSearchParser {
+export class QueryParser {
 	/**
-	 * Create a new AdvancedSearchParser parser.
+	 * Create a new QueryParser parser.
 	 * @param options Configuration options for the parser.
 	 */
-	constructor(protected options?: AdvancedSearchParserOptions) {}
+	constructor(protected options?: QueryParserOptions) {}
 
 	// Convert query to tokens
 	private tokenize(query: string): Token[] {

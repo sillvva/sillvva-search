@@ -2,7 +2,7 @@
 
 Users often need to specify more nuanced criteria than basic keyword seaches, such as searching within specific fields, excluding certain terms, or applying logical operators (AND, OR, NOT). Parsing these types of queries can be tricky. Some websites, like [The Gatherer](https://gatherer.wizards.com/advanced-search) (Magic the Gathering's card database), choose to provide "Advanced Search" forms that provide multiple fields for the user to filter the search results. Others like [Scryfall](https://scryfall.com/docs/syntax) choose to provide a single field that interprets human-readable query strings with a custom syntax into search results.
 
-The latter option is what `AdvancedSearchParser` was designed to assist with. It addresses this need by providing a programmatic way to interpret human-readable query strings into a structured, easily consumable format. Included is a custom search syntax that features:
+The latter option is what `QueryParser` was designed to assist with. It addresses this need by providing a programmatic way to interpret human-readable query strings into a structured, easily consumable format. Included is a custom search syntax that features:
 
 > - **Word or phrase matching:** e.g., `ai "deep learning"`
 > - **Field-specific searches:** e.g., `author:"John Doe"`
@@ -11,14 +11,14 @@ The latter option is what `AdvancedSearchParser` was designed to assist with. It
 > - **Numerical operators:** e.g., `age>=30`
 > - **Regular expressions:** e.g., `author:/John (Doe|Smith)/`
 
-By transforming these complex strings into a structured representation like an Abstract Syntax Tree, `AdvancedSearchParser` simplifies the subsequent steps of building database queries, filtering data, or highlighting search results. This separation of concerns — parsing the query from executing the search — makes your search logic cleaner, more maintainable, and less prone to errors.
+By transforming these complex strings into a structured representation like an Abstract Syntax Tree, `QueryParser` simplifies the subsequent steps of building database queries, filtering data, or highlighting search results. This separation of concerns — parsing the query from executing the search — makes your search logic cleaner, more maintainable, and less prone to errors.
 
-While the package includes other classes, such as `JSONSearchParser` and `DrizzleSearchParser`, these are primarily illustrative examples demonstrating how you can integrate `AdvancedSearchParser` into different search scenarios. The true value and primary focus of `@sillvva/search` is the `AdvancedSearchParser` class.
+While the package includes other classes, such as `JSONSearchParser` and `DrizzleSearchParser`, these are primarily illustrative examples demonstrating how you can integrate `QueryParser` into different search scenarios. The true value and primary focus of `@sillvva/search` is the `QueryParser` class.
 
 # Table of Contents
 - [Installation](#installation)
 - [Classes](#classes)
-	- [The `AdvancedSearchParser` Class](#the-advancedsearchparser-class)
+	- [The `QueryParser` Class](#the-queryparser-class)
 		- [Syntax Reference](#syntax-reference)
 		- [Type Reference](#type-reference)
 			- [`type Token`](#type-token)
@@ -42,14 +42,14 @@ bun add @sillvva/search
 
 # Classes
 
-## The `AdvancedSearchParser` Class
+## The `QueryParser` Class
 
 This is a base class intended for creating a parser class for more specific use cases. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle. See the [`DrizzleSearchParser`](#the-drizzlesearchparser-class) and [`JSONSearchParser`](#the-jsonsearchparser-class) classes for examples.
 
 ```ts
-import { AdvancedSearchParser } from "@sillvva/search";
+import { QueryParser } from "@sillvva/search";
 
-const query = new AdvancedSearchParser({ validKeys: ["title", "author"] });
+const query = new QueryParser({ validKeys: ["title", "author"] });
 const result = query.parse('author:Tolkien -title:"The Hobbit"');
 
 console.log(result.tokens);
@@ -103,7 +103,7 @@ console.log(result.astConditions);
 
 #### `type Token`
 
-The tokens represent the various syntax components detailed above. The protected `parse` method of the [`AdvancedSearchParser`](#the-advancedsearchparser-class), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
+The tokens represent the various syntax components detailed above. The protected `parse` method of the [`QueryParser`](#the-QueryParser-class), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
 
 ```ts
 /**
@@ -193,7 +193,7 @@ export interface ASTCondition {
 
 ## The `JSONSearchParser` Class
 
-`JSONSearchParser` is a class that extends the [`AdvancedSearchParser`](#the-advancedsearchparser-class) class and provides a filter method that filters an array of JSON data using a search query.
+`JSONSearchParser` is a class that extends the [`QueryParser`](#the-QueryParser-class) class and provides a filter method that filters an array of JSON data using a search query.
 
 ```ts
 const query = new JSONSearchParser(books, { validKeys: ["title", "author"] });
@@ -202,7 +202,7 @@ const filteredBooks = query.filter('author:Tolkien -title:"The Hobbit"');
 
 ## The `DrizzleSearchParser` Class
 
-`DrizzleSearchParser` is a class that extends the [`AdvancedSearchParser`](#the-advancedsearchparser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the v2 relational query builder. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
+`DrizzleSearchParser` is a class that extends the [`QueryParser`](#the-QueryParser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the v2 relational query builder. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
 
 The class requires two type parameters:
 - The relations from the `defineRelations` function in Drizzle's RQB v2.

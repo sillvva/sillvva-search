@@ -4,9 +4,9 @@ import type {
   RelationsFilter
 } from "drizzle-orm";
 import {
-  AdvancedSearchParser,
-  AdvancedSearchParserOptions,
   NumericOperator,
+  QueryParser,
+  QueryParserOptions,
   Token,
   type ASTCondition,
   type ASTNode
@@ -23,9 +23,9 @@ const operatorMap = new Map<NumericOperator, DrizzleOperator>([
 ]);
 
 /**
- * A parser for Drizzle ORM that extends {@linkcode AdvancedSearchParser} to parse advanced search queries into Drizzle-compatible filter objects.
+ * A parser for Drizzle ORM that extends {@linkcode QueryParser} to parse advanced search queries into Drizzle-compatible filter objects.
  * @typeParam TRelations - The relations of the Drizzle schema.
- * @typeParam TableName - The name of the table to search. See {@linkcode AdvancedSearchParserOptions}
+ * @typeParam TableName - The name of the table to search. See {@linkcode QueryParserOptions}
  *
  * @example
  * You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
@@ -70,7 +70,7 @@ export class DrizzleSearchParser<
     TRSchema[TableName],
     TRSchema
   > = RelationsFilter<TRSchema[TableName], TRSchema>
-> extends AdvancedSearchParser {
+> extends QueryParser {
   /**
    * Create a new DrizzleSearchParser.
    * @param conditionBuilderFn - A function that builds a Drizzle filter object from an {@linkcode ASTCondition}.
@@ -78,7 +78,7 @@ export class DrizzleSearchParser<
    */
   constructor(
     private conditionBuilderFn: (ast: ASTCondition) => TFilter | undefined,
-    options?: AdvancedSearchParserOptions
+    options?: QueryParserOptions
   ) {
     super(options);
   }

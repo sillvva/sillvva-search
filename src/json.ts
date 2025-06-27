@@ -1,4 +1,4 @@
-import { AdvancedSearchParser, type ASTNode } from "./index";
+import { QueryParser, type ASTNode } from "./index";
 
 /**
  * A parser for filtering arrays of JSON data using advanced search queries.
@@ -22,7 +22,7 @@ import { AdvancedSearchParser, type ASTNode } from "./index";
  * const result = parser.filter('author:Tolkien');
  * // result: [{ title: "The Hobbit", author: "Tolkien" }]
  */
-export class JSONSearchParser<T extends Record<any, any>> extends AdvancedSearchParser {
+export class JSONSearchParser<T extends Record<any, any>> extends QueryParser {
   private data: T[];
   /**
    * Create a new JSONSearchParser.
