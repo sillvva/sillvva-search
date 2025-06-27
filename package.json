@@ -19,8 +19,9 @@
 		"dev": "tsup --watch",
 		"link": "pnpm build && pnpm link",
 		"clean": "rm -rf dist",
-		"prepublishOnly": "pnpm build",
-		"typecheck": "tsc --noEmit"
+		"prepublishOnly": "pnpm test && pnpm build",
+		"typecheck": "tsc --noEmit",
+		"test": "jest"
 	},
 	"repository": {
 		"type": "git",
@@ -57,6 +58,9 @@
 		}
 	},
 	"devDependencies": {
+		"@types/jest": "^30.0.0",
+		"jest": "^30.0.3",
+		"ts-jest": "^29.4.0",
 		"tsup": "^8.5.0",
 		"typescript": "^5.8.3"
 	},
