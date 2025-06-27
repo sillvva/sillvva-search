@@ -16,6 +16,7 @@ export type Token =
 	| { type: "keyword_phrase"; key: string; value: string }
 	| { type: "keyword_regex"; key: string; value: string }
 	| { type: "keyword_numeric"; key: string; operator: NumericOperator; value: number }
+	| { type: "keyword_date"; key: string; operator: NumericOperator; value: Date }
 	| { type: "word"; value: string }
 	| { type: "phrase"; value: string }
 	| { type: "regex"; value: string }
@@ -24,7 +25,7 @@ export type Token =
 	| { type: "close_paren" }
 	| { type: "negation" };
 
-type ConditionToken = "keyword" | "keyword_phrase" | "keyword_regex" | "keyword_numeric" | "word" | "phrase" | "regex";
+type ConditionToken = "keyword" | "keyword_phrase" | "keyword_regex" | "keyword_numeric" | "keyword_date" | "word" | "phrase" | "regex";
 
 /**
  * Represents a node in the abstract syntax tree (AST) for a search query.
@@ -49,7 +50,7 @@ interface ConditionNode {
 	type: "condition";
 	token: ConditionToken;
 	key?: string;
-	value: string | number;
+	value: string | number | Date;
 	negated?: boolean;
 	operator?: NumericOperator;
 }
@@ -61,13 +62,15 @@ export interface ASTCondition {
 	/** The key for the condition, if any (e.g., 'author'). */
 	key?: string;
 	/** The value for the condition (e.g., 'Tolkien'). */
-	value: string | number;
-	/** Whether the value is a regex pattern. */
-	isRegex: boolean;
+	value: string | number | Date;
 	/** Whether the condition is negated. */
 	isNegated: boolean;
+	/** Whether the value is a regex pattern. */
+	isRegex: boolean;
 	/** Whether the condition is numeric. */
 	isNumeric: boolean;
+	/** Whether the condition is a date. */
+	isDate: boolean;
 	/** The numeric operator, if applicable. */
 	operator?: NumericOperator;
 }
@@ -137,11 +140,12 @@ export class QueryParser {
 	// Convert query to tokens
 	private tokenize(query: string): Token[] {
 		const tokens: Token[] = [];
-		const regex = /(-?\()|(\))|(-)|(\w+)(:|=|>=|<=|>|<)(-?\d+(?:\.\d+)?)|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
+		const regex = /(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(-?\d+(?:\.\d+)?))|((?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/))/g;
 		let match: RegExpExecArray | null;
-
+    
 		while (match = regex.exec(query)) {
-			const [, open, close, negation, keywordNumeric, operator, numericValue, keyword, value, quote, regex] = match;
+      const [, open, close, negation, keywordNumeric, operator, dateValue, numericValue, keyword, value, quote, regex] = match;
+      console.log({ open, close, negation, keywordNumeric, operator, dateValue, numericValue, keyword, value, quote, regex });
 
 			if (open) {
 				tokens.push({ type: "open_paren", negated: open.startsWith("-") });
@@ -151,9 +155,7 @@ export class QueryParser {
 				tokens.push({ type: "negation" });
 			} else if (keyword && (value || quote || regex)) {
 				// Filter out invalid keys if validKeys is specified
-				if (this.options?.validKeys && !this.options.validKeys.includes(keyword)) {
-					continue;
-				}
+				if (this.options?.validKeys && !this.options.validKeys.includes(keyword)) continue;
 
 				if (value) {
 					tokens.push({
@@ -176,16 +178,33 @@ export class QueryParser {
 				}
 			} else if (keywordNumeric && operator && numericValue) {
 				// Filter out invalid keys if validKeys is specified
-				if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
-					continue;
-				}
+				if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) continue;
+
+				const value = parseFloat(numericValue);
+				if (isNaN(value)) continue;
 
 				tokens.push({
 					type: "keyword_numeric",
 					key: keywordNumeric,
 					operator: operator === ":" ? "=" : (operator as NumericOperator),
-					value: parseFloat(numericValue)
+					value: value
 				});
+      } else if (keywordNumeric && operator && dateValue) {
+				// Filter out invalid keys if validKeys is specified
+				if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) continue;
+
+				let value = Date.parse(dateValue);
+				if (isNaN(value)) continue;
+
+				// Compare <=dates to the end of the day
+				if (operator === "<=") value += 86399999;
+
+        tokens.push({
+          type: "keyword_date",
+          key: keywordNumeric,
+          operator: operator === ":" ? "=" : (operator as NumericOperator),
+          value: new Date(value)
+        });
 			} else if (value) {
 				const upperValue = value.toUpperCase();
 
@@ -278,6 +297,7 @@ export class QueryParser {
 					};
 
 				case "keyword_numeric":
+				case "keyword_date":
 					return {
 						type: "condition",
 						token: token.type,
@@ -320,9 +340,10 @@ export class QueryParser {
 						{
 							key: ast.key,
 							value: ast.value,
-							isRegex: ast.token.includes("regex"),
 							isNegated,
+							isRegex: ast.token.includes("regex"),
 							isNumeric: ast.token === "keyword_numeric",
+							isDate: ast.token === "keyword_date",
 							operator: ast.operator
 						}
 					];

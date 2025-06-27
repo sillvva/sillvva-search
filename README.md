@@ -8,7 +8,7 @@ The latter option is what `QueryParser` was designed to assist with. It addresse
 > - **Field-specific searches:** e.g., `author:"John Doe"`
 > - **Exclusions:** e.g., `-"draft"`
 > - **Logical operators and grouping:** e.g., `(status:published AND category:technology) OR tag:AI`
-> - **Numerical operators:** e.g., `age>=30`
+> - **Numerical operators:** e.g., `age>=30` or `created<2025-01-01`
 > - **Regular expressions:** e.g., `author:/John (Doe|Smith)/`
 
 By transforming these complex strings into a structured representation like an Abstract Syntax Tree, `QueryParser` simplifies the subsequent steps of building database queries, filtering data, or highlighting search results. This separation of concerns — parsing the query from executing the search — makes your search logic cleaner, more maintainable, and less prone to errors.
@@ -26,7 +26,6 @@ While the package includes other classes, such as `JSONSearchParser` and `Drizzl
 			- [`interface ASTCondition`](#interface-astcondition)
 	- [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
 	- [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
-- [Roadmap](#roadmap)
 
 # Installation
 
@@ -94,7 +93,7 @@ console.log(result.astConditions);
 | `key:"a phrase"` | This syntax will be parsed as a "keyword_phrase" token. It combines the properties of the "keyword" and "phrase" tokens. |
 | `/^regex$/` | This syntax will be parsed as a "regex" token. The regular expression between the `/` will be provided as a string and can be converted to a `RegExp` object in JS or passed to a SQL statement using supported syntax. |
 | `key:/^regex$/` | This syntax combines the properties of the "keyword" syntax and the "regex" syntax. |
-| `key=10`<br>`key<=10`<br>`key<10`<br>`key>10`<br>`key>=10` | When using numeric operators and numbers, the token will be treated as numeric an become a "keyword_numeric" token with the operator provided. |
+| `key=10`<br>`key>10`<br>`key<10`<br>`key>=2024-01-01`<br>`key<=2024-12-31` | When using numeric operators and numbers or dates, the token will be treated as numeric an become a "keyword_numeric" or "keyword_date" token with the operator provided. Dates must be formatted as `YYYY-MM-DD`. |
 | `AND` and `OR` | You can use `AND` and `OR` operators between tokens. When no provider is specified, `AND` is implied. |
 | `(...)` | Tokens can be grouped together using round brackets (parentheses). Groups can also be nested. |
 | `-` | The negator character (dash or minus) can be used to negate a "word", "keyword", "phrase", "keyword_phrase", "regex", or "keyword_regex" token. Example: `-word -"phrase"`<br><br>It can also be used to negate a group. Example: `-(word1 OR word2)` |
@@ -106,24 +105,15 @@ console.log(result.astConditions);
 The tokens represent the various syntax components detailed above. The protected `parse` method of the [`QueryParser`](#the-QueryParser-class), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
 
 ```ts
-/**
- * Represents a logical operator in a search query.
- */
 export type LogicalOperator = "AND" | "OR";
-
-/**
- * Represents a numeric operator in a search query.
- */
 export type NumericOperator = "=" | ">" | "<" | ">=" | "<=";
 
-/**
- * Represents a token parsed from the search query string.
- */
 export type Token =
 	| { type: "keyword"; key: string; value: string }
 	| { type: "keyword_phrase"; key: string; value: string }
 	| { type: "keyword_regex"; key: string; value: string }
 	| { type: "keyword_numeric"; key: string; operator: NumericOperator; value: number }
+	| { type: "keyword_date"; key: string; operator: NumericOperator; value: Date }
 	| { type: "word"; value: string }
 	| { type: "phrase"; value: string }
 	| { type: "regex"; value: string }
@@ -135,17 +125,11 @@ export type Token =
 
 #### `type ASTNode`
 
-The Abstract Syntax Tree is represented by the `ASTNode` type, which is a type that recursively references itself for nested conditions.
+The Abstract Syntax Tree is represented by the `ASTNode` type, which is a type that recursively references itself for nested conditions. The `BinaryNode` represents a logical operation (AND/OR) between two nodes. The `ConditionNode` represents a single search condition.
 
 ```ts
-/**
- * Represents a node in the Abstract Syntax Tree (AST) for a search query.
- */
 export type ASTNode = BinaryNode | ConditionNode;
 
-/**
- * A binary node in the AST, representing a logical operation (AND/OR) between two nodes.
- */
 interface BinaryNode {
 	type: "binary";
 	operator: LogicalOperator;
@@ -154,14 +138,11 @@ interface BinaryNode {
 	negated?: boolean;
 }
 
-/**
- * A condition node in the AST, representing a single search condition.
- */
 interface ConditionNode {
 	type: "condition";
 	token: ConditionToken;
 	key?: string;
-	value: string | number;
+	value: string | number | Date;
 	negated?: boolean;
 	operator?: NumericOperator;
 }
@@ -172,20 +153,19 @@ interface ConditionNode {
 The `ASTCondition` type is a flattened object representing condition nodes from the Abstract Syntax Tree. In the [DrizzleSearchParser](#the-drizzlesearchparser-class), the parser function you provide uses this type as its only parameter for converting AST nodes into Drizzle-compatible filter objects.
 
 ```ts
-/**
- * Represents a flattened search condition extracted from the AST.
- */
 export interface ASTCondition {
 	/** The key for the condition, if any (e.g., 'author'). */
 	key?: string;
 	/** The value for the condition (e.g., 'Tolkien'). */
-	value: string | number;
-	/** Whether the value is a regex pattern. */
-	isRegex: boolean;
+	value: string | number | Date;
 	/** Whether the condition is negated. */
 	isNegated: boolean;
+	/** Whether the value is a regex pattern. */
+	isRegex: boolean;
 	/** Whether the condition is numeric. */
 	isNumeric: boolean;
+	/** Whether the condition is a date. */
+	isDate: boolean;
 	/** The numeric operator, if applicable. */
 	operator?: NumericOperator;
 }
@@ -214,7 +194,9 @@ The constructor takes two parameters:
 	- `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
 	- `defaultKey` allows you to define a default key for "word" tokens as defined in the [syntax reference](#syntax-reference).
 
-The `parseDrizzle` method returns the `tokens`, Abstract Syntax Tree (`ast`), the AST conditions (`astConditions`), and the `where` object.
+The class has three methods:
+- The `parseNumeric` and `parseDate` method parses "keyword_numeric" and "keyword_date" conditions and operator to the Drizzle-compatible equivalent.
+- The `parseDrizzle` method returns the `tokens`, Abstract Syntax Tree (`ast`), the AST conditions (`astConditions`), and the Drizzle-compatible `where` object.
 
 ```ts
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
@@ -243,9 +225,3 @@ const { where } = parser.parseDrizzle("name:John age:thirty");
 // Usage
 const users = await db.query.user.findMany({ where });
 ```
-
-# Roadmap
-
-In the future I plan to experiment with to possibly add some of the following features:
-
-> Coming soon

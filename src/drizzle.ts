@@ -23,9 +23,9 @@ const operatorMap = new Map<NumericOperator, DrizzleOperator>([
 ]);
 
 /**
- * A parser for Drizzle ORM that extends {@linkcode QueryParser} to parse advanced search queries into Drizzle-compatible filter objects.
+ * A parser for Drizzle ORM that extends {@linkcode AdvancedSearchParser} to parse advanced search queries into Drizzle-compatible filter objects.
  * @typeParam TRelations - The relations of the Drizzle schema.
- * @typeParam TableName - The name of the table to search. See {@linkcode QueryParserOptions}
+ * @typeParam TableName - The name of the table to search. See {@linkcode AdvancedSearchParserOptions}
  *
  * @example
  * You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
@@ -117,6 +117,7 @@ export class DrizzleSearchParser<
             isRegex: node.token.includes("regex"),
             isNegated,
             isNumeric: node.token === "keyword_numeric",
+            isDate: node.token === "keyword_date",
             operator: node.operator
           });
       }
@@ -142,9 +143,10 @@ export class DrizzleSearchParser<
    */
   parseNumeric(cond: ASTCondition): TFilter | number | undefined {
     if (!cond.isNumeric || !cond.operator) return undefined;
+    if (typeof cond.value !== "number") return undefined;
 
     const op = operatorMap.get(cond.operator);
-    const value = Number(cond.value);
+    const value = cond.value;
 
     // If the value is NaN, return undefined
     if (isNaN(value)) return undefined;
@@ -153,6 +155,16 @@ export class DrizzleSearchParser<
     if (op === "eq") return value;
     
     // Otherwise, return the Drizzle filter object
+    return op && { [op]: value } as unknown as TFilter;
+  }
+
+  parseDate(cond: ASTCondition): TFilter | undefined {
+    if (!cond.isDate || !cond.operator) return undefined;
+    if (!(cond.value instanceof Date)) return undefined;
+
+    const op = operatorMap.get(cond.operator);
+    const value = cond.value;
+
     return op && { [op]: value } as unknown as TFilter;
   }
 
