@@ -140,7 +140,7 @@ export class QueryParser {
 	// Convert query to tokens
 	private tokenize(query: string): Token[] {
 		const tokens: Token[] = [];
-		const regex = /(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(-?\d+(?:\.\d+)?))|((?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/))/g;
+		const regex = /(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
 		let match: RegExpExecArray | null;
     
 		while (match = regex.exec(query)) {
