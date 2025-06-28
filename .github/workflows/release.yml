@@ -57,12 +57,6 @@ jobs:
           version: 8
       - run: pnpm install
       - run: pnpm build
-      - name: Get Previous Tag
-        id: prev-tag
-        run: |
-          RECENT_TAG=$(git tag --sort=-version:refname | head -n 1)
-          echo "Previous Tag: $RECENT_TAG"
-          echo "prev_tag=$RECENT_TAG" >> $GITHUB_OUTPUT
       - name: Create Tag
         run: |
           git tag v${{ needs.check-version.outputs.version }}
@@ -74,5 +68,3 @@ jobs:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: v${{ needs.check-version.outputs.version }}
           draft: true
-          body: |
-            Full Changelog: [${{ steps.prev-tag.outputs.prev_tag }}...v${{ needs.check-version.outputs.version }}](https://github.com/${{ github.repository }}/compare/${{ steps.prev-tag.outputs.prev_tag }}...v${{ needs.check-version.outputs.version }})
