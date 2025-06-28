@@ -47,6 +47,8 @@ jobs:
     needs:
       - check-version
       - test
+    permissions:
+      contents: write
     if: needs.test.result == 'success' && needs.check-version.outputs.should_release == 'true'
     steps:
       - uses: actions/checkout@v4
