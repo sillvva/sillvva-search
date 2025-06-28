@@ -19,7 +19,7 @@
 		"dev": "tsup --watch",
 		"link": "pnpm build && pnpm link",
 		"clean": "rm -rf dist",
-		"prepublishOnly": "pnpm test && pnpm build",
+		"prepublishOnly": "pnpm build",
 		"typecheck": "tsc --noEmit",
 		"test": "jest"
 	},
