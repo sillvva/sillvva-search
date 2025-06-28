@@ -137,11 +137,35 @@ export class QueryParser {
 	private tokenize(query: string): Token[] {
 		const tokens: Token[] = [];
 		const regex =
-			/(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
+			/(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+):(?:(\d{4}-\d{2}-\d{2})..(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})..(\d{4}-\d{2})|(\d{4})..(\d{4})|(-?\d+(?:\.\d+)?)..(-?\d+(?:\.\d+)?))|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
 		let match: RegExpExecArray | null;
 
 		while ((match = regex.exec(query))) {
-			const [, open, close, negation, keywordNumeric, operator, dateValue, monthValue, yearValue, numericValue, keyword, value, quote, regex] = match;
+			const [
+				,
+				open,
+				close,
+				negation,
+				keywordRange,
+				date1,
+				date2,
+				month1,
+				month2,
+				year1,
+				year2,
+				numeric1,
+				numeric2,
+				keywordNumeric,
+				operator,
+				dateValue,
+				monthValue,
+				yearValue,
+				numericValue,
+				keyword,
+				value,
+				quote,
+				regex
+			] = match;
 
 			if (open) {
 				tokens.push({ type: "open_paren", negated: open.startsWith("-") });
@@ -170,6 +194,53 @@ export class QueryParser {
 						type: "keyword_regex",
 						key: keyword,
 						value: regex
+					});
+				}
+			} else if (keywordRange) {
+				if ((date1 && date2) || (month1 && month2) || (year1 && year2)) {
+					let start = new Date(date1 || month1 || year1 || "");
+					if (isNaN(start.getTime())) continue;
+					let end = new Date(date2 || month2 || year2 || "");
+					if (isNaN(end.getTime())) continue;
+
+					if (date1) {
+						end.setUTCDate(end.getUTCDate() + 1);
+					} else if (month1) {
+						end.setUTCMonth(end.getUTCMonth() + 1);
+					} else {
+						end.setUTCFullYear(end.getUTCFullYear() + 1);
+					}
+					end.setMilliseconds(-1);
+
+					tokens.push({
+						type: "keyword_date",
+						key: keywordRange,
+						value: start,
+						operator: ">="
+					});
+					tokens.push({
+						type: "keyword_date",
+						key: keywordRange,
+						value: end,
+						operator: "<="
+					});
+				} else if (numeric1 && numeric2) {
+					let start = parseFloat(numeric1);
+					if (isNaN(start)) continue;
+					let end = parseFloat(numeric2);
+					if (isNaN(end)) continue;
+
+					tokens.push({
+						type: "keyword_numeric",
+						key: keywordRange,
+						value: start,
+						operator: ">="
+					});
+					tokens.push({
+						type: "keyword_numeric",
+						key: keywordRange,
+						value: end,
+						operator: "<="
 					});
 				}
 			} else if (keywordNumeric && operator && numericValue) {
@@ -203,11 +274,11 @@ export class QueryParser {
 				} else {
 					const end = new Date(start);
 					if (dateValue) {
-						end.setDate(end.getDate() + 1);
+						end.setUTCDate(end.getUTCDate() + 1);
 					} else if (monthValue) {
-						end.setMonth(end.getMonth() + 1);
+						end.setUTCMonth(end.getUTCMonth() + 1);
 					} else {
-						end.setFullYear(end.getFullYear() + 1);
+						end.setUTCFullYear(end.getUTCFullYear() + 1);
 					}
 					end.setMilliseconds(-1);
 

@@ -97,48 +97,111 @@ describe("QueryParser", () => {
 		const result = parser["parse"]("created<2025-05-05");
 		const token = result.tokens[0];
 		expect(token).toBeDefined();
-		if (token) {
-			expect(token.type).toBe("keyword_date");
-			if (token.type === "keyword_date") {
-				expect(token.value instanceof Date).toBe(true);
-				expect(token.value.toISOString()).toBe("2025-05-05T00:00:00.000Z");
-			}
-		}
-		expect(token).toMatchObject({
+		expect(token).toEqual({
 			type: "keyword_date",
 			key: "created",
+			value: new Date("2025-05-05"),
 			operator: "<"
 		});
-		expect(result.ast).toMatchObject({
+		expect(result.ast).toEqual({
 			type: "condition",
 			token: "keyword_date",
 			key: "created",
+			value: new Date("2025-05-05"),
 			operator: "<"
 		});
 
 		// Month
 		const result2 = parser["parse"]("created<2025-05");
 		const token2 = result2.tokens[0];
-		expect(token2).toBeDefined();
-		if (token2) {
-			expect(token2.type).toBe("keyword_date");
-			if (token2.type === "keyword_date") {
-				expect(token2.value instanceof Date).toBe(true);
-				expect(token2.value.toISOString()).toBe("2025-05-01T00:00:00.000Z");
-			}
-		}
+		expect(token2).toEqual({
+			type: "keyword_date",
+			key: "created",
+			value: new Date("2025-05"),
+			operator: "<"
+		});
+		expect(result2.ast).toEqual({
+			type: "condition",
+			token: "keyword_date",
+			key: "created",
+			value: new Date("2025-05"),
+			operator: "<"
+		});
 
 		// Year
 		const result3 = parser["parse"]("created<2025");
 		const token3 = result3.tokens[0];
 		expect(token3).toBeDefined();
-		if (token3) {
-			expect(token3.type).toBe("keyword_date");
-			if (token3.type === "keyword_date") {
-				expect(token3.value instanceof Date).toBe(true);
-				expect(token3.value.toISOString()).toBe("2025-01-01T00:00:00.000Z");
-			}
-		}
+		expect(token3).toEqual({
+			type: "keyword_date",
+			key: "created",
+			value: new Date("2025"),
+			operator: "<"
+		});
+		expect(result3.ast).toEqual({
+			type: "condition",
+			token: "keyword_date",
+			key: "created",
+			value: new Date("2025"),
+			operator: "<"
+		});
+	});
+
+	it("parses date range queries", () => {
+		// Full Date
+		const parser = new QueryParser({ validKeys: ["created"] });
+		const result = parser["parse"]("created:2025-05-05..2025-05-10");
+		expect(result.tokens).toEqual([
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=" },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-10T23:59:59.999Z"), operator: "<=" }
+		]);
+		expect(result.ast).toEqual({
+			type: "binary",
+			operator: "AND",
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=" },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-10T23:59:59.999Z"), operator: "<=" }
+		});
+
+		// Month
+		const result2 = parser["parse"]("created:2025-05..2025-07");
+		expect(result2.tokens).toEqual([
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
+			{ type: "keyword_date", key: "created", value: new Date("2025-07-31T23:59:59.999Z"), operator: "<=" }
+		]);
+		expect(result2.ast).toEqual({
+			type: "binary",
+			operator: "AND",
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-07-31T23:59:59.999Z"), operator: "<=" }
+		});
+
+		// Year
+		const result3 = parser["parse"]("created:2025..2026");
+		expect(result3.tokens).toEqual([
+			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
+			{ type: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" }
+		]);
+		expect(result3.ast).toEqual({
+			type: "binary",
+			operator: "AND",
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" }
+		});
+	});
+
+	it("parses numeric range queries", () => {
+		const parser = new QueryParser({ validKeys: ["age"] });
+		const result = parser["parse"]("age:10..20");
+		expect(result.tokens).toEqual([
+			{ type: "keyword_numeric", key: "age", operator: ">=", value: 10 },
+			{ type: "keyword_numeric", key: "age", operator: "<=", value: 20 }
+		]);
+		expect(result.ast).toEqual({
+			type: "binary",
+			operator: "AND",
+			left: { type: "condition", token: "keyword_numeric", key: "age", operator: ">=", value: 10 },
+			right: { type: "condition", token: "keyword_numeric", key: "age", operator: "<=", value: 20 }
+		});
 	});
 
 	it("parses regex queries", () => {
