@@ -26,7 +26,7 @@ While the package includes other classes, such as `JSONSearchParser` and `Drizzl
       - [`Token`](#token)
       - [`ASTNode`](#astnode)
       - [`ASTCondition`](#astcondition)
-      - [`ParseError`](#parseerror)
+      - [`ParseError`, `ParseMetadata`, and `ParseResult`](#parseerror-parsemetadata-and-parseresult)
   - [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
   - [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
 
@@ -175,9 +175,9 @@ export interface ASTCondition {
 }
 ```
 
-#### `ParseError`
+#### `ParseError`, `ParseMetadata`, and `ParseResult`
 
-The protected `parse` method also returns an array of parse errors, if any.
+The protected `parse` method returns a `ParseResult` object, which contains the tokens, abstract syntax tree, flattened conditions array, and query metadata. The metadata includes any syntax or invalid key errors from the query.
 
 ```ts
 export interface ParseError {
@@ -186,6 +186,20 @@ export interface ParseError {
 	position: number;
 	key?: string;
 	value?: string;
+}
+
+export interface ParseMetadata {
+	originalQuery: string;
+	parseTime: number;
+	hasErrors: boolean;
+	errors: ParseError[];
+}
+
+export interface ParseResult {
+	tokens: Token[];
+	ast: ASTNode | null;
+	astConditions: ASTCondition[];
+	metadata: ParseMetadata;
 }
 ```
 
