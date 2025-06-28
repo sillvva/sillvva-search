@@ -137,7 +137,7 @@ export class QueryParser {
 	private tokenize(query: string): Token[] {
 		const tokens: Token[] = [];
 		const regex =
-			/(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+):(?:(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})\.\.(\d{4}-\d{2})|(\d{4})\.\.(\d{4})|(-?\d+(?:\.\d+)?)\.\.(-?\d+(?:\.\d+)?))|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
+			/(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+):(?:(\d{4}-\d{2}-\d{2})\.{2}(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})\.{2}(\d{4}-\d{2})|(\d{4})\.{2}(\d{4})|(-?\d+(?:\.\d+)?)\.{2}(-?\d+(?:\.\d+)?))|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
 		let match: RegExpExecArray | null;
 
 		while ((match = regex.exec(query))) {
@@ -215,14 +215,14 @@ export class QueryParser {
 					tokens.push({
 						type: "keyword_date",
 						key: keywordRange,
-						value: start,
-						operator: ">="
+						operator: ">=",
+						value: start
 					});
 					tokens.push({
 						type: "keyword_date",
 						key: keywordRange,
-						value: end,
-						operator: "<="
+						operator: "<=",
+						value: end
 					});
 				} else if (numeric1 && numeric2) {
 					let start = parseFloat(numeric1);
@@ -233,14 +233,14 @@ export class QueryParser {
 					tokens.push({
 						type: "keyword_numeric",
 						key: keywordRange,
-						value: start,
-						operator: ">="
+						operator: ">=",
+						value: start
 					});
 					tokens.push({
 						type: "keyword_numeric",
 						key: keywordRange,
-						value: end,
-						operator: "<="
+						operator: "<=",
+						value: end
 					});
 				}
 			} else if (keywordNumeric && operator && numericValue) {
