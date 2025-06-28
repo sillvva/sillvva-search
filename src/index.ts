@@ -111,6 +111,14 @@ export interface QueryParserOptions {
 	defaultKey?: string;
 }
 
+export interface ParseError {
+	type: "syntax" | "invalid_key";
+	message: string;
+	position: number;
+	key?: string;
+	value?: string;
+}
+
 /**
  * A parser and analyzer for advanced search queries. Supports tokenization and abstract syntax tree generation.
  *
@@ -156,202 +164,262 @@ export class QueryParser {
 	constructor(protected options?: QueryParserOptions) {}
 
 	// Convert query to tokens
-	private tokenize(query: string): Token[] {
+	private tokenize(query: string): { tokens: Token[]; errors: ParseError[] } {
+		const errors: ParseError[] = [];
 		const tokens: Token[] = [];
+
 		const regex =
-			/(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+):(?:(\d{4}-\d{2}-\d{2})\.{2}(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})\.{2}(\d{4}-\d{2})|(\d{4})\.{2}(\d{4})|(-?\d+(?:\.\d+)?)\.{2}(-?\d+(?:\.\d+)?))|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g;
-		let match: RegExpExecArray | null;
+			/(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+):(?:(\d{4}-\d{2}-\d{2})\.{2}(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})\.{2}(\d{4}-\d{2})|(\d{4})\.{2}(\d{4})|(-?\d+(?:\.\d+)?)\.{2}(-?\d+(?:\.\d+)?))|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)|([^\s]+)/g;
 
-		while ((match = regex.exec(query))) {
-			const [
-				,
-				open,
-				close,
-				negation,
-				keywordRange,
-				date1,
-				date2,
-				month1,
-				month2,
-				year1,
-				year2,
-				numeric1,
-				numeric2,
-				keywordNumeric,
-				operator,
-				dateValue,
-				monthValue,
-				yearValue,
-				numericValue,
-				keyword,
-				value,
-				quote,
-				regex
-			] = match;
+		if (!query.match(regex)) {
+			errors.push({
+				type: "syntax",
+				message: "Unexpected syntax",
+				position: 0,
+				value: query
+			});
+		} else {
+			let match: RegExpExecArray | null;
+			while ((match = regex.exec(query))) {
+				const [
+					_,
+					open,
+					close,
+					negation,
+					keywordRange,
+					date1,
+					date2,
+					month1,
+					month2,
+					year1,
+					year2,
+					numeric1,
+					numeric2,
+					keywordNumeric,
+					operator,
+					dateValue,
+					monthValue,
+					yearValue,
+					numericValue,
+					keyword,
+					value,
+					quote,
+					regex,
+					other
+				] = match;
 
-			if (open) {
-				tokens.push({ type: "open_paren", negated: open.startsWith("-") });
-			} else if (close) {
-				tokens.push({ type: "close_paren" });
-			} else if (negation) {
-				tokens.push({ type: "negation" });
-			} else if (keyword && (value || quote || regex)) {
-				// Filter out invalid keys if validKeys is specified
-				if (this.options?.validKeys && !this.options.validKeys.includes(keyword)) continue;
-
-				if (value) {
-					tokens.push({
-						type: "keyword",
-						key: keyword,
-						value: value
+				if (other) {
+					errors.push({
+						type: "syntax",
+						message: "Unexpected syntax",
+						position: match.index,
+						value: other
 					});
-				} else if (quote) {
-					tokens.push({
-						type: "keyword_phrase",
-						key: keyword,
-						value: quote
-					});
-				} else if (regex) {
-					tokens.push({
-						type: "keyword_regex",
-						key: keyword,
-						value: regex
-					});
+					continue;
 				}
-			} else if (keywordRange) {
-				if ((date1 && date2) || (month1 && month2) || (year1 && year2)) {
-					let start = new Date(date1 || month1 || year1 || "");
-					if (isNaN(start.getTime())) continue;
-					let end = new Date(date2 || month2 || year2 || "");
-					if (isNaN(end.getTime())) continue;
 
-					if (date1) {
-						end.setUTCDate(end.getUTCDate() + 1);
-					} else if (month1) {
-						end.setUTCMonth(end.getUTCMonth() + 1);
-					} else {
-						end.setUTCFullYear(end.getUTCFullYear() + 1);
-					}
-					end.setMilliseconds(-1);
-
-					tokens.push({
-						type: "keyword_date",
-						key: keywordRange,
-						operator: ">=",
-						value: start
-					});
-					tokens.push({
-						type: "keyword_date",
-						key: keywordRange,
-						operator: "<=",
-						value: end
-					});
-				} else if (numeric1 && numeric2) {
-					let start = parseFloat(numeric1);
-					if (isNaN(start)) continue;
-					let end = parseFloat(numeric2);
-					if (isNaN(end)) continue;
-
-					tokens.push({
-						type: "keyword_numeric",
-						key: keywordRange,
-						operator: ">=",
-						value: start
-					});
-					tokens.push({
-						type: "keyword_numeric",
-						key: keywordRange,
-						operator: "<=",
-						value: end
-					});
-				}
-			} else if (keywordNumeric && operator && numericValue) {
-				// Filter out invalid keys if validKeys is specified
-				if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) continue;
-
-				const value = parseFloat(numericValue);
-				if (isNaN(value)) continue;
-
-				tokens.push({
-					type: "keyword_numeric",
-					key: keywordNumeric,
-					operator: operator === ":" ? "=" : (operator as NumericOperator),
-					value: value
-				});
-			} else if (keywordNumeric && operator && (dateValue || monthValue || yearValue)) {
-				// Filter out invalid keys if validKeys is specified
-				if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) continue;
-
-				let start = new Date(dateValue || monthValue || yearValue || "");
-				if (isNaN(start.getTime())) continue;
-
-				let op = operator === ":" ? "=" : (operator as NumericOperator);
-				if (op === "<" || op === ">=") {
-					tokens.push({
-						type: "keyword_date",
-						key: keywordNumeric,
-						operator: op,
-						value: start
-					});
-				} else {
-					const end = new Date(start);
-					if (dateValue) {
-						end.setUTCDate(end.getUTCDate() + 1);
-					} else if (monthValue) {
-						end.setUTCMonth(end.getUTCMonth() + 1);
-					} else {
-						end.setUTCFullYear(end.getUTCFullYear() + 1);
-					}
-					end.setMilliseconds(-1);
-
-					if (op === "<=" || op === ">") {
-						tokens.push({
-							type: "keyword_date",
-							key: keywordNumeric,
-							operator: op,
-							value: end
+				if (open) {
+					tokens.push({ type: "open_paren", negated: open.startsWith("-") });
+				} else if (close) {
+					tokens.push({ type: "close_paren" });
+				} else if (negation) {
+					tokens.push({ type: "negation" });
+				} else if (keyword && (value || quote || regex)) {
+					// Filter out invalid keys if validKeys is specified
+					if (this.options?.validKeys && !this.options.validKeys.includes(keyword)) {
+						errors.push({
+							type: "invalid_key",
+							message: `Invalid key: ${keyword}`,
+							position: match.index,
+							key: keyword,
+							value: value || quote || regex
 						});
-					} else {
+						continue;
+					}
+
+					if (value) {
+						tokens.push({
+							type: "keyword",
+							key: keyword,
+							value: value
+						});
+					} else if (quote) {
+						tokens.push({
+							type: "keyword_phrase",
+							key: keyword,
+							value: quote
+						});
+					} else if (regex) {
+						tokens.push({
+							type: "keyword_regex",
+							key: keyword,
+							value: regex
+						});
+					}
+				} else if (keywordRange) {
+					if (this.options?.validKeys && !this.options.validKeys.includes(keywordRange)) {
+						errors.push({
+							type: "invalid_key",
+							message: `Invalid key: ${keywordRange}`,
+							position: match.index,
+							key: keywordRange,
+							value: date1 || date2 || month1 || month2 || year1 || year2
+						});
+						continue;
+					}
+
+					if ((date1 && date2) || (month1 && month2) || (year1 && year2)) {
+						let start = new Date(date1 || month1 || year1 || "");
+						if (isNaN(start.getTime())) continue;
+						let end = new Date(date2 || month2 || year2 || "");
+						if (isNaN(end.getTime())) continue;
+
+						if (date1) {
+							end.setUTCDate(end.getUTCDate() + 1);
+						} else if (month1) {
+							end.setUTCMonth(end.getUTCMonth() + 1);
+						} else {
+							end.setUTCFullYear(end.getUTCFullYear() + 1);
+						}
+						end.setMilliseconds(-1);
+
 						tokens.push({
 							type: "keyword_date",
-							key: keywordNumeric,
+							key: keywordRange,
 							operator: ">=",
 							value: start
 						});
 						tokens.push({
 							type: "keyword_date",
-							key: keywordNumeric,
+							key: keywordRange,
+							operator: "<=",
+							value: end
+						});
+					} else if (numeric1 && numeric2) {
+						let start = parseFloat(numeric1);
+						if (isNaN(start)) continue;
+						let end = parseFloat(numeric2);
+						if (isNaN(end)) continue;
+
+						tokens.push({
+							type: "keyword_numeric",
+							key: keywordRange,
+							operator: ">=",
+							value: start
+						});
+						tokens.push({
+							type: "keyword_numeric",
+							key: keywordRange,
 							operator: "<=",
 							value: end
 						});
 					}
-				}
-			} else if (value) {
-				const upperValue = value.toUpperCase();
+				} else if (keywordNumeric && operator && numericValue) {
+					// Filter out invalid keys if validKeys is specified
+					if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
+						errors.push({
+							type: "invalid_key",
+							message: `Invalid key: ${keywordNumeric}`,
+							position: match.index,
+							key: keywordNumeric,
+							value: numericValue
+						});
+						continue;
+					}
 
-				if (upperValue === "AND" || upperValue === "OR") {
-					tokens.push({ type: "operator", value: upperValue });
-				} else if (this.options?.defaultKey) {
-					tokens.push({ type: "keyword", key: this.options.defaultKey, value });
-				} else {
-					tokens.push({ type: "word", value });
-				}
-			} else if (quote) {
-				if (this.options?.defaultKey) {
-					tokens.push({ type: "keyword_phrase", key: this.options.defaultKey, value: quote });
-				} else {
-					tokens.push({ type: "phrase", value: quote });
-				}
-			} else if (regex) {
-				if (this.options?.defaultKey) {
-					tokens.push({ type: "keyword_regex", key: this.options.defaultKey, value: regex });
-				} else {
-					tokens.push({ type: "regex", value: regex });
+					const value = parseFloat(numericValue);
+					if (isNaN(value)) continue;
+
+					tokens.push({
+						type: "keyword_numeric",
+						key: keywordNumeric,
+						operator: operator === ":" ? "=" : (operator as NumericOperator),
+						value: value
+					});
+				} else if (keywordNumeric && operator && (dateValue || monthValue || yearValue)) {
+					// Filter out invalid keys if validKeys is specified
+					if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
+						errors.push({
+							type: "invalid_key",
+							message: `Invalid key: ${keywordNumeric}`,
+							position: match.index,
+							key: keywordNumeric,
+							value: dateValue || monthValue || yearValue
+						});
+						continue;
+					}
+
+					let start = new Date(dateValue || monthValue || yearValue || "");
+					if (isNaN(start.getTime())) continue;
+
+					let op = operator === ":" ? "=" : (operator as NumericOperator);
+					if (op === "<" || op === ">=") {
+						tokens.push({
+							type: "keyword_date",
+							key: keywordNumeric,
+							operator: op,
+							value: start
+						});
+					} else {
+						const end = new Date(start);
+						if (dateValue) {
+							end.setUTCDate(end.getUTCDate() + 1);
+						} else if (monthValue) {
+							end.setUTCMonth(end.getUTCMonth() + 1);
+						} else {
+							end.setUTCFullYear(end.getUTCFullYear() + 1);
+						}
+						end.setMilliseconds(-1);
+
+						if (op === "<=" || op === ">") {
+							tokens.push({
+								type: "keyword_date",
+								key: keywordNumeric,
+								operator: op,
+								value: end
+							});
+						} else {
+							tokens.push({
+								type: "keyword_date",
+								key: keywordNumeric,
+								operator: ">=",
+								value: start
+							});
+							tokens.push({
+								type: "keyword_date",
+								key: keywordNumeric,
+								operator: "<=",
+								value: end
+							});
+						}
+					}
+				} else if (value) {
+					const upperValue = value.toUpperCase();
+
+					if (upperValue === "AND" || upperValue === "OR") {
+						tokens.push({ type: "operator", value: upperValue });
+					} else if (this.options?.defaultKey) {
+						tokens.push({ type: "keyword", key: this.options.defaultKey, value });
+					} else {
+						tokens.push({ type: "word", value });
+					}
+				} else if (quote) {
+					if (this.options?.defaultKey) {
+						tokens.push({ type: "keyword_phrase", key: this.options.defaultKey, value: quote });
+					} else {
+						tokens.push({ type: "phrase", value: quote });
+					}
+				} else if (regex) {
+					if (this.options?.defaultKey) {
+						tokens.push({ type: "keyword_regex", key: this.options.defaultKey, value: regex });
+					} else {
+						tokens.push({ type: "regex", value: regex });
+					}
 				}
 			}
 		}
 
-		return tokens;
+		return { tokens, errors };
 	}
 
 	// Convert tokens to Abstract Syntax Tree
@@ -482,14 +550,27 @@ export class QueryParser {
 		tokens: Token[];
 		ast: ASTNode | null;
 		astConditions: ASTCondition[];
+		metadata: {
+			originalQuery: string;
+			parseTime: number;
+			hasErrors: boolean;
+			errors: ParseError[];
+		};
 	} {
-		const tokens = this.tokenize(query);
+		const start = performance.now();
+		const { tokens, errors } = this.tokenize(query);
 		const ast = this.buildAST(tokens);
 		const astConditions = this.extractConditions(ast);
 		return {
 			tokens,
 			ast,
-			astConditions
+			astConditions,
+			metadata: {
+				originalQuery: query,
+				parseTime: performance.now() - start,
+				hasErrors: errors.length > 0,
+				errors
+			}
 		};
 	}
 }

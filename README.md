@@ -6,7 +6,7 @@ The latter option is what `QueryParser` was designed to assist with. It addresse
 
 > - **Word or phrase matching:** e.g., `ai "deep learning"`
 > - **Field-specific searches:** e.g., `author:"John Doe"`
-> - **Exclusions:** e.g., `-"draft"`
+> - **Exclusions:** e.g., `-draft`
 > - **Logical operators and grouping:** e.g., `status:published (category:technology OR tag:AI)`
 > - **Numerical operators:** e.g., `age>=30` or `created<2025-01-01`
 > - **Range operators:** e.g., `age:20..30` or `created:2025-01..2025-06`
@@ -23,9 +23,10 @@ While the package includes other classes, such as `JSONSearchParser` and `Drizzl
   - [The `QueryParser` Class](#the-queryparser-class)
     - [Syntax Reference](#syntax-reference)
     - [Type Reference](#type-reference)
-      - [`type Token`](#type-token)
-      - [`type ASTNode`](#type-astnode)
-      - [`interface ASTCondition`](#interface-astcondition)
+      - [`Token`](#token)
+      - [`ASTNode`](#astnode)
+      - [`ASTCondition`](#astcondition)
+      - [`ParseError`](#parseerror)
   - [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
   - [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
 
@@ -103,7 +104,7 @@ console.log(result.astConditions);
 
 ### Type Reference
 
-#### `type Token`
+#### `Token`
 
 The tokens represent the various syntax components detailed above. The protected `parse` method of the [`QueryParser`](#the-queryparser-class), converts the search query string into tokens and then into an `ASTNode` object and an array of `ASTCondition` objects.
 
@@ -126,7 +127,7 @@ export type Token =
 	| { type: "negation" };
 ```
 
-#### `type ASTNode`
+#### `ASTNode`
 
 The Abstract Syntax Tree is represented by the `ASTNode` type, which is a type that recursively references itself for nested conditions. The `BinaryNode` represents a logical operation (AND/OR) between two nodes. The `ConditionNode` represents a single search condition.
 
@@ -151,7 +152,7 @@ interface ConditionNode {
 }
 ```
 
-#### `interface ASTCondition`
+#### `ASTCondition`
 
 The `ASTCondition` type is a flattened object representing condition nodes from the Abstract Syntax Tree. In the [DrizzleSearchParser](#the-drizzlesearchparser-class), the parser function you provide uses this type as its only parameter for converting AST nodes into Drizzle-compatible filter objects.
 
@@ -171,6 +172,20 @@ export interface ASTCondition {
 	isDate: boolean;
 	/** The numeric operator, if applicable. */
 	operator?: NumericOperator;
+}
+```
+
+#### `ParseError`
+
+The protected `parse` method also returns an array of parse errors, if any.
+
+```ts
+export interface ParseError {
+	type: "syntax" | "invalid_key";
+	message: string;
+	position: number;
+	key?: string;
+	value?: string;
 }
 ```
 

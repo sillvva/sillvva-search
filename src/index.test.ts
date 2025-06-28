@@ -277,4 +277,18 @@ describe("QueryParser", () => {
 			right: { type: "condition", token: "keyword_phrase", key: "title", value: "The Lord" }
 		});
 	});
+
+	it("returns errors for invalid syntax", () => {
+		const parser = new QueryParser();
+		const result = parser["parse"]("hello~world");
+		expect(result.metadata.hasErrors).toBe(true);
+		expect(result.metadata.errors).toEqual([{ type: "syntax", message: "Unexpected syntax", position: 5, value: "~world" }]);
+	});
+
+	it("returns errors for invalid keys", () => {
+		const parser = new QueryParser({ validKeys: ["title"] });
+		const result = parser["parse"]("author:Tolkien");
+		expect(result.metadata.hasErrors).toBe(true);
+		expect(result.metadata.errors).toEqual([{ type: "invalid_key", message: "Invalid key: author", position: 0, key: "author", value: "Tolkien" }]);
+	});
 });
