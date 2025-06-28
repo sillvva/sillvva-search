@@ -57,8 +57,6 @@ jobs:
       - run: pnpm build
       - name: Create Tag
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag v${{ needs.check-version.outputs.version }}
           git push origin v${{ needs.check-version.outputs.version }}
       - name: Get previous tag
