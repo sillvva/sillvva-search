@@ -4,6 +4,7 @@
 	"description": "A parser and analyzer for advanced search queries, supporting tokenization, abstract syntax tree generation, and condition extraction.",
 	"keywords": [
 		"search",
+		"syntax",
 		"query",
 		"filter",
 		"parser",
@@ -11,7 +12,8 @@
 		"tokenization",
 		"ast",
 		"database",
-		"orm"
+		"orm",
+		"typescript"
 	],
 	"author": "Matt DeKok",
 	"scripts": {
