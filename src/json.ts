@@ -15,12 +15,13 @@ import { QueryParser, type ASTNode } from "./index";
  *
  * const books: Book[] = [
  *   { title: "The Hobbit", author: "Tolkien" },
+ *   { title: "The Lord of the Rings", author: "Tolkien" },
  *   { title: "1984", author: "Orwell" }
  * ];
  *
  * const parser = new JSONSearchParser(books, { validKeys: ["title", "author"], defaultKey: "title" });
- * const result = parser.filter('author:Tolkien');
- * // result: [{ title: "The Hobbit", author: "Tolkien" }]
+ * const result = parser.filter('author:tolkien -hobbit');
+ * // result: [{ title: "The Lord of the Rings", author: "Tolkien" }]
  */
 export class JSONSearchParser<T extends Record<any, any>> extends QueryParser {
 	private data: T[];

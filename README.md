@@ -179,8 +179,22 @@ export interface ASTCondition {
 `JSONSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a filter method that filters an array of JSON data using a search query.
 
 ```ts
-const query = new JSONSearchParser(books, { validKeys: ["title", "author"] });
-const filteredBooks = query.filter('author:Tolkien -title:"The Hobbit"');
+import { JSONSearchParser } from "@sillvva/search/json";
+
+interface Book {
+	title: string;
+	author: string;
+}
+
+const books: Book[] = [
+	{ title: "The Hobbit", author: "Tolkien" },
+	{ title: "The Lord of the Rings", author: "Tolkien" },
+	{ title: "1984", author: "Orwell" }
+];
+
+const parser = new JSONSearchParser(books, { validKeys: ["title", "author"], defaultKey: "title" });
+const result = parser.filter("author:tolkien -hobbit");
+// result: [{ title: "The Lord of the Rings", author: "Tolkien" }]
 ```
 
 ## The `DrizzleSearchParser` Class
