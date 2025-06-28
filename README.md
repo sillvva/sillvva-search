@@ -7,7 +7,7 @@ The latter option is what `QueryParser` was designed to assist with. It addresse
 > - **Word or phrase matching:** e.g., `ai "deep learning"`
 > - **Field-specific searches:** e.g., `author:"John Doe"`
 > - **Exclusions:** e.g., `-"draft"`
-> - **Logical operators and grouping:** e.g., `(status:published AND category:technology) OR tag:AI`
+> - **Logical operators and grouping:** e.g., `status:published (category:technology OR tag:AI)`
 > - **Numerical operators:** e.g., `age>=30` or `created<2025-01-01`
 > - **Range operators:** e.g., `age:20..30` or `created:2025-01..2025-06`
 > - **Regular expressions:** e.g., `author:/John (Doe|Smith)/`
