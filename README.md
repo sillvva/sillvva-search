@@ -9,7 +9,7 @@ The latter option is what `QueryParser` was designed to assist with. It addresse
 > - **Exclusions:** e.g., `-"draft"`
 > - **Logical operators and grouping:** e.g., `(status:published AND category:technology) OR tag:AI`
 > - **Numerical operators:** e.g., `age>=30` or `created<2025-01-01`
-> - **Range operators:** e.g., `age:20..30` or `created:2025-01..2025-12`
+> - **Range operators:** e.g., `age:20..30` or `created:2025-01..2025-06`
 > - **Regular expressions:** e.g., `author:/John (Doe|Smith)/`
 
 By transforming these complex strings into a structured representation like an Abstract Syntax Tree, `QueryParser` simplifies the subsequent steps of building database queries, filtering data, or highlighting search results. This separation of concerns — parsing the query from executing the search — makes your search logic cleaner, more maintainable, and less prone to errors.
