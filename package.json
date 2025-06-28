@@ -1,6 +1,6 @@
 {
 	"name": "@sillvva/search",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "A parser and analyzer for advanced search queries, supporting tokenization, abstract syntax tree generation, and condition extraction.",
 	"keywords": [
 		"search",
