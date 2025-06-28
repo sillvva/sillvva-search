@@ -214,7 +214,7 @@ const result = parser.filter("author:tolkien -hobbit");
 
 ## The `DrizzleSearchParser` Class
 
-`DrizzleSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the v2 relational query builder. You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
+`DrizzleSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the [v2 relational query builder](https://rqbv2.drizzle-orm-fe.pages.dev/docs/rqb-v2#select-filters). You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
 
 The class requires two type parameters:
 
