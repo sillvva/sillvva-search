@@ -57,19 +57,19 @@ jobs:
           version: 8
       - run: pnpm install
       - run: pnpm build
-      - name: Create Tag
-        run: |
-          git tag v${{ needs.check-version.outputs.version }}
-          git push origin v${{ needs.check-version.outputs.version }}
       - name: Get previous tag
         id: prev-tag
         run: |
-          PREV_TAG=$(git tag --sort=-creatordate | grep -v "^v${{ needs.check-version.outputs.version }}$" | head -n 1)
+          CURRENT_TAG="v${{ needs.check-version.outputs.version }}"
+          ALL_TAGS=$(git tag -l "v*" | sort -V)
+          PREV_TAG=$(echo "$ALL_TAGS" | grep -B1 "^${CURRENT_TAG}$" | head -n 1)
           echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           tag_name: v${{ needs.check-version.outputs.version }}
           name: Release v${{ needs.check-version.outputs.version }}
+          draft: true
           body: |
             Full Changelog: [${{ steps.prev-tag.outputs.prev_tag }}...v${{ needs.check-version.outputs.version }}](https://github.com/${{ github.repository }}/compare/${{ steps.prev-tag.outputs.prev_tag }}...v${{ needs.check-version.outputs.version }})
