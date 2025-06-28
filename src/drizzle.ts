@@ -1,5 +1,5 @@
 import type { ExtractTablesWithRelations, Relations, RelationsFilter } from "drizzle-orm";
-import { NumericOperator, QueryParser, QueryParserOptions, Token, type ASTCondition, type ASTNode } from "./index";
+import { NumericOperator, ParseError, QueryParser, QueryParserOptions, Token, type ASTCondition, type ASTNode } from "./index";
 
 type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
 
@@ -149,6 +149,12 @@ export class DrizzleSearchParser<
 		ast: ASTNode | null;
 		astConditions: ASTCondition[];
 		where: TFilter | undefined;
+		metadata: {
+			originalQuery: string;
+			parseTime: number;
+			hasErrors: boolean;
+			errors: ParseError[];
+		};
 	} {
 		const result = this.parse(query);
 		const where = this.buildWhereClause(result.ast);
