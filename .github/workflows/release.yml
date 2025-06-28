@@ -60,7 +60,7 @@ jobs:
       - name: Get Previous Tag
         id: prev-tag
         run: |
-          RECENT_TAG=$(git describe --tags --abbrev=0)
+          RECENT_TAG=$(git tag --sort=-version:refname | head -n 1)
           echo "prev_tag=$RECENT_TAG" >> $GITHUB_OUTPUT
       - name: Create Tag
         run: |
