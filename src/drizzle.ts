@@ -1,7 +1,11 @@
 import type { ExtractTablesWithRelations, Relations, RelationsFilter } from "drizzle-orm";
-import { NumericOperator, ParseError, QueryParser, QueryParserOptions, Token, type ASTCondition, type ASTNode } from "./index";
+import { NumericOperator, ParseResult, QueryParser, QueryParserOptions, type ASTCondition, type ASTNode } from "./index";
 
 type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
+
+export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>> extends ParseResult {
+	where: TFilter | undefined;
+}
 
 const operatorMap = new Map<NumericOperator, DrizzleOperator>([
 	["=", "eq"],
@@ -144,18 +148,7 @@ export class DrizzleSearchParser<
 	 * @param query - The search query string.
 	 * @returns The parsed search query.
 	 */
-	parseDrizzle(query: string): {
-		tokens: Token[];
-		ast: ASTNode | null;
-		astConditions: ASTCondition[];
-		where: TFilter | undefined;
-		metadata: {
-			originalQuery: string;
-			parseTime: number;
-			hasErrors: boolean;
-			errors: ParseError[];
-		};
-	} {
+	parseDrizzle(query: string): DrizzleParseResult<TFilter> {
 		const result = this.parse(query);
 		const where = this.buildWhereClause(result.ast);
 		return {

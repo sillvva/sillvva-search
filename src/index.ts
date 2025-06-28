@@ -119,6 +119,20 @@ export interface ParseError {
 	value?: string;
 }
 
+export interface ParseMetadata {
+	originalQuery: string;
+	parseTime: number;
+	hasErrors: boolean;
+	errors: ParseError[];
+}
+
+export interface ParseResult {
+	tokens: Token[];
+	ast: ASTNode | null;
+	astConditions: ASTCondition[];
+	metadata: ParseMetadata;
+}
+
 /**
  * A parser and analyzer for advanced search queries. Supports tokenization and abstract syntax tree generation.
  *
@@ -546,17 +560,7 @@ export class QueryParser {
 	 * @param query The search query string to parse.
 	 * @returns An object containing the tokens, AST, and extracted conditions.
 	 */
-	protected parse(query: string): {
-		tokens: Token[];
-		ast: ASTNode | null;
-		astConditions: ASTCondition[];
-		metadata: {
-			originalQuery: string;
-			parseTime: number;
-			hasErrors: boolean;
-			errors: ParseError[];
-		};
-	} {
+	protected parse(query: string): ParseResult {
 		const start = performance.now();
 		const { tokens, errors } = this.tokenize(query);
 		const ast = this.buildAST(tokens);
