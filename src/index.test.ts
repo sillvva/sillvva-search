@@ -209,6 +209,19 @@ describe("QueryParser", () => {
 			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-10T23:59:59.999Z"), operator: "<=" }
 		});
 
+		// Date with time
+		const result7 = parser["parse"]("created:2025-05-05 12:00..2025-05-10 12:00");
+		expect(result7.tokens).toEqual([
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=" },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-10 12:00"), operator: "<=" }
+		]);
+		expect(result7.ast).toEqual({
+			type: "binary",
+			operator: "AND",
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=" },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-10 12:00"), operator: "<=" }
+		});
+
 		// Month
 		const result2 = parser["parse"]("created:2025-05..2025-07");
 		expect(result2.tokens).toEqual([

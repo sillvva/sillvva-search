@@ -317,12 +317,14 @@ export class QueryParser {
 
 						if (date1 && !date1.match(dateTimeRegex)) {
 							end.setUTCDate(end.getUTCDate() + 1);
+							end.setMilliseconds(-1);
 						} else if (month1) {
 							end.setUTCMonth(end.getUTCMonth() + 1);
-						} else {
+							end.setMilliseconds(-1);
+						} else if (year1) {
 							end.setUTCFullYear(end.getUTCFullYear() + 1);
+							end.setMilliseconds(-1);
 						}
-						end.setMilliseconds(-1);
 
 						tokens.push({
 							type: "keyword_date",
@@ -405,12 +407,14 @@ export class QueryParser {
 						const end = new Date(start);
 						if (dateValue && !dateValue.match(dateTimeRegex)) {
 							end.setUTCDate(end.getUTCDate() + 1);
+							end.setMilliseconds(-1);
 						} else if (monthValue) {
 							end.setUTCMonth(end.getUTCMonth() + 1);
-						} else {
+							end.setMilliseconds(-1);
+						} else if (yearValue) {
 							end.setUTCFullYear(end.getUTCFullYear() + 1);
+							end.setMilliseconds(-1);
 						}
-						end.setMilliseconds(-1);
 
 						if (op === "<=" || op === ">") {
 							tokens.push({
