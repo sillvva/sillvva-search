@@ -188,16 +188,16 @@ export class QueryParser {
 		// Negation (negation)
 		regexes.push(/(?: |^)(-)/g.source);
 
-		const dateRegex = /(\d{4}-\d{2}-\d{2})/g.source;
+		const dateRegex = /(\d{4}-\d{2}-\d{2}(?:(?:T| )\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?)/g.source;
 		const monthRegex = /(\d{4}-\d{2})/g.source;
 		const yearRegex = /(\d{4})/g.source;
 		const numberRegex = /(-?\d+(?:\.\d+)?)/g.source;
 
 		// Date and number ranges (keywordRange/date1/date2/month1/month2/year1/year2/numeric1/numeric2)
-		const dateRangeRegex = `${dateRegex}\.{2}${dateRegex}`;
-		const monthRangeRegex = `${monthRegex}\.{2}${monthRegex}`;
-		const yearRangeRegex = `${yearRegex}\.{2}${yearRegex}`;
-		const numberRangeRegex = `${numberRegex}\.{2}${numberRegex}`;
+		const dateRangeRegex = `${dateRegex}\\.{2}${dateRegex}`;
+		const monthRangeRegex = `${monthRegex}\\.{2}${monthRegex}`;
+		const yearRangeRegex = `${yearRegex}\\.{2}${yearRegex}`;
+		const numberRangeRegex = `${numberRegex}\\.{2}${numberRegex}`;
 		regexes.push(`(\\w+):(?:${dateRangeRegex}|${monthRangeRegex}|${yearRangeRegex}|${numberRangeRegex})`);
 
 		// Numeric comparison (keywordNumeric/operator/dateValue/monthValue/yearValue/numericValue)
