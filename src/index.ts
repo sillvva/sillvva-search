@@ -221,6 +221,7 @@ export class QueryParser {
 			});
 		} else {
 			let match: RegExpExecArray | null;
+			let previousToken: Token | null = null;
 			while ((match = regex.exec(query))) {
 				const [
 					_,
@@ -326,6 +327,10 @@ export class QueryParser {
 							end.setMilliseconds(-1);
 						}
 
+						if (previousToken?.type === "negation") {
+							tokens.pop();
+							tokens.push({ type: "open_paren", negated: true });
+						} else tokens.push({ type: "open_paren" });
 						tokens.push({
 							type: "keyword_date",
 							key: keywordRange,
@@ -338,6 +343,7 @@ export class QueryParser {
 							operator: "<=",
 							value: end
 						});
+						tokens.push({ type: "close_paren" });
 					} else if (numeric1 && numeric2) {
 						let start = parseFloat(numeric1);
 						if (isNaN(start)) continue;
@@ -432,6 +438,10 @@ export class QueryParser {
 								value: start
 							});
 						} else {
+							if (previousToken?.type === "negation") {
+								tokens.pop();
+								tokens.push({ type: "open_paren", negated: true });
+							} else tokens.push({ type: "open_paren" });
 							tokens.push({
 								type: "keyword_date",
 								key: keywordNumeric,
@@ -444,6 +454,7 @@ export class QueryParser {
 								operator: "<=",
 								value: end
 							});
+							tokens.push({ type: "close_paren" });
 						}
 					}
 				} else if (value) {
@@ -469,6 +480,8 @@ export class QueryParser {
 						tokens.push({ type: "regex", value: regex });
 					}
 				}
+
+				previousToken = tokens.at(-1) || null;
 			}
 		}
 
