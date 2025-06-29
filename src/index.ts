@@ -193,12 +193,13 @@ export class QueryParser {
 		const monthRegex = /(\d{4}-\d{2})/g.source;
 		const yearRegex = /(\d{4})/g.source;
 		const numberRegex = /(-?\d+(?:\.\d+)?)/g.source;
+		const rangeRegex = /\.{2}/g.source;
 
 		// Date and number ranges (keywordRange/date1/date2/month1/month2/year1/year2/numeric1/numeric2)
-		const dateRangeRegex = `${dateRegex}\\.{2}${dateRegex}`;
-		const monthRangeRegex = `${monthRegex}\\.{2}${monthRegex}`;
-		const yearRangeRegex = `${yearRegex}\\.{2}${yearRegex}`;
-		const numberRangeRegex = `${numberRegex}\\.{2}${numberRegex}`;
+		const dateRangeRegex = `${dateRegex}${rangeRegex}${dateRegex}`;
+		const monthRangeRegex = `${monthRegex}${rangeRegex}${monthRegex}`;
+		const yearRangeRegex = `${yearRegex}${rangeRegex}${yearRegex}`;
+		const numberRangeRegex = `${numberRegex}${rangeRegex}${numberRegex}`;
 		regexes.push(`(\\w+)(?::|=)(?:${dateRangeRegex}|${monthRangeRegex}|${yearRangeRegex}|${numberRangeRegex})`);
 
 		// Numeric comparison (keywordNumeric/operator/dateValue/monthValue/yearValue/numericValue)
