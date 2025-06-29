@@ -188,7 +188,7 @@ export class QueryParser {
 		// Negation (negation)
 		regexes.push(/(?: |^)(-)/g.source);
 
-		const dateRegex = /(\d{4}-\d{2}-\d{2}(?:(?:T| )\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?)/g.source;
+		const dateRegex = /(\d{4}-\d{2}-\d{2}(?:(?:T| )\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?)/g.source;
 		const monthRegex = /(\d{4}-\d{2})/g.source;
 		const yearRegex = /(\d{4})/g.source;
 		const numberRegex = /(-?\d+(?:\.\d+)?)/g.source;
