@@ -221,7 +221,6 @@ export class QueryParser {
 			});
 		} else {
 			let match: RegExpExecArray | null;
-			let previousToken: Token | null = null;
 			while ((match = regex.exec(query))) {
 				const [
 					_,
@@ -327,7 +326,7 @@ export class QueryParser {
 							end.setMilliseconds(-1);
 						}
 
-						if (previousToken?.type === "negation") {
+						if (tokens.at(-1)?.type === "negation") {
 							tokens.pop();
 							tokens.push({ type: "open_paren", negated: true });
 						} else tokens.push({ type: "open_paren" });
@@ -438,7 +437,7 @@ export class QueryParser {
 								value: start
 							});
 						} else {
-							if (previousToken?.type === "negation") {
+							if (tokens.at(-1)?.type === "negation") {
 								tokens.pop();
 								tokens.push({ type: "open_paren", negated: true });
 							} else tokens.push({ type: "open_paren" });
@@ -480,8 +479,6 @@ export class QueryParser {
 						tokens.push({ type: "regex", value: regex });
 					}
 				}
-
-				previousToken = tokens.at(-1) || null;
 			}
 		}
 
