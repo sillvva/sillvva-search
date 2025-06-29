@@ -188,22 +188,22 @@ export class QueryParser {
 		// Negation (negation)
 		regexes.push(/(?: |^)(-)/g.source);
 
-		const dateRegex = /(\d{4}-\d{2}-\d{2}(?:(?:T| )\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?)/g.source;
-		const dateTimeRegex = /(\d{4}-\d{2}-\d{2}(?:(?:T| )\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?))/g.source;
+		const dateTimeRegex = /(\d{4}-\d{2}-\d{2}(?:(?:T| )\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?)/g.source;
+		const timeRegex = /(?:(?:T| )\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)/g.source;
 		const monthRegex = /(\d{4}-\d{2})/g.source;
 		const yearRegex = /(\d{4})/g.source;
 		const numberRegex = /(-?\d+(?:\.\d+)?)/g.source;
 		const rangeRegex = /\.{2}/g.source;
 
 		// Date and number ranges (keywordRange/date1/date2/month1/month2/year1/year2/numeric1/numeric2)
-		const dateRangeRegex = `${dateRegex}${rangeRegex}${dateRegex}`;
+		const dateRangeRegex = `${dateTimeRegex}${rangeRegex}${dateTimeRegex}`;
 		const monthRangeRegex = `${monthRegex}${rangeRegex}${monthRegex}`;
 		const yearRangeRegex = `${yearRegex}${rangeRegex}${yearRegex}`;
 		const numberRangeRegex = `${numberRegex}${rangeRegex}${numberRegex}`;
 		regexes.push(`(\\w+)(?::|=)(?:${dateRangeRegex}|${monthRangeRegex}|${yearRangeRegex}|${numberRangeRegex})`);
 
 		// Numeric comparison (keywordNumeric/operator/dateValue/monthValue/yearValue/numericValue)
-		regexes.push(`(\\w+)(:|=|>=|<=|>|<)(?:${dateRegex}|${monthRegex}|${yearRegex}|${numberRegex})`);
+		regexes.push(`(\\w+)(:|=|>=|<=|>|<)(?:${dateTimeRegex}|${monthRegex}|${yearRegex}|${numberRegex})`);
 
 		// Text (keyword/value/quote/regex)
 		regexes.push(/(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g.source);
@@ -316,7 +316,7 @@ export class QueryParser {
 						let end = new Date(date2 || month2 || year2 || "");
 						if (isNaN(end.getTime())) continue;
 
-						if (date1 && !date1.match(dateTimeRegex)) {
+						if (date1 && !date1.match(timeRegex)) {
 							end.setUTCDate(end.getUTCDate() + 1);
 							end.setMilliseconds(-1);
 						} else if (month1) {
@@ -411,7 +411,7 @@ export class QueryParser {
 						});
 					} else {
 						const end = new Date(start);
-						const hasTime = dateValue?.match(dateTimeRegex);
+						const hasTime = dateValue?.match(timeRegex);
 						if (dateValue && !hasTime) {
 							end.setUTCDate(end.getUTCDate() + 1);
 							end.setMilliseconds(-1);
