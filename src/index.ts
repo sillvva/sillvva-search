@@ -133,6 +133,19 @@ export interface ParseResult {
 	metadata: ParseMetadata;
 }
 
+function formatParentheses(str: string) {
+	return (
+		str
+			// Add spaces around parentheses
+			.replace(/\(/g, " ( ")
+			.replace(/\)/g, " ) ")
+			// Normalize multiple spaces to single space
+			.replace(/\s+/g, " ")
+			// Remove leading/trailing spaces
+			.trim()
+	);
+}
+
 /**
  * A parser and analyzer for advanced search queries. Supports tokenization and abstract syntax tree generation.
  *
@@ -612,6 +625,7 @@ export class QueryParser {
 	 */
 	protected parse(query: string): ParseResult {
 		const start = performance.now();
+		query = formatParentheses(query);
 		const { tokens, errors } = this.tokenize(query);
 		const ast = this.buildAST(tokens);
 		const astConditions = this.extractConditions(ast);

@@ -336,7 +336,9 @@ describe("QueryParser", () => {
 
 	it("parses regex queries", () => {
 		const parser = new QueryParser({ validKeys: ["author"] });
-		const result = parser["parse"]("author:/Tolk.*/");
+
+		// Field-specific regex
+		let result = parser["parse"]("author:/Tolk.*/");
 		expect(result.tokens).toEqual([{ type: "keyword_regex", key: "author", value: "Tolk.*" }]);
 		expect(result.ast).toEqual({
 			type: "condition",
@@ -344,6 +346,11 @@ describe("QueryParser", () => {
 			key: "author",
 			value: "Tolk.*"
 		});
+
+		// Standalone regex
+		result = parser["parse"]("/Tolk.*/");
+		expect(result.tokens).toEqual([{ type: "regex", value: "Tolk.*" }]);
+		expect(result.ast).toEqual({ type: "condition", token: "regex", value: "Tolk.*" });
 	});
 
 	it("parses defaultKey for word/phrase", () => {
@@ -373,5 +380,51 @@ describe("QueryParser", () => {
 		const result = parser["parse"]("author:Tolkien");
 		expect(result.metadata.hasErrors).toBe(true);
 		expect(result.metadata.errors).toEqual([{ type: "invalid_key", message: "Invalid key: author", position: 0, key: "author", value: "Tolkien" }]);
+	});
+
+	it("handles empty queries", () => {
+		const parser = new QueryParser();
+		const result = parser["parse"]("");
+		expect(result.tokens).toEqual([]);
+		expect(result.ast).toBeNull();
+		expect(result.astConditions).toEqual([]);
+	});
+
+	it("handles whitespace-only queries", () => {
+		const parser = new QueryParser();
+		const result = parser["parse"]("   ");
+		expect(result.tokens).toEqual([]);
+		expect(result.ast).toBeNull();
+		expect(result.astConditions).toEqual([]);
+	});
+
+	it("handles deeply nested parentheses", () => {
+		const parser = new QueryParser();
+		const query = "((foo or bar) and baz)";
+		let result = parser["parse"](query);
+		expect(result.ast).toEqual({
+			type: "binary",
+			operator: "AND",
+			left: {
+				type: "binary",
+				operator: "OR",
+				left: { type: "condition", token: "word", value: "foo" },
+				right: { type: "condition", token: "word", value: "bar" }
+			},
+			right: { type: "condition", token: "word", value: "baz" }
+		});
+
+		result = parser["parse"](`(foo and (bar or baz))`);
+		expect(result.ast).toEqual({
+			type: "binary",
+			operator: "AND",
+			left: { type: "condition", token: "word", value: "foo" },
+			right: {
+				type: "binary",
+				operator: "OR",
+				left: { type: "condition", token: "word", value: "bar" },
+				right: { type: "condition", token: "word", value: "baz" }
+			}
+		});
 	});
 });
