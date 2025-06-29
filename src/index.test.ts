@@ -103,14 +103,14 @@ describe("QueryParser", () => {
 
 		// Full Date
 		const result = parser["parse"]("created<2025-05-05");
-		const token = result.tokens[0];
-		expect(token).toBeDefined();
-		expect(token).toEqual({
-			type: "keyword_date",
-			key: "created",
-			value: new Date("2025-05-05"),
-			operator: "<"
-		});
+		expect(result.tokens).toEqual([
+			{
+				type: "keyword_date",
+				key: "created",
+				value: new Date("2025-05-05"),
+				operator: "<"
+			}
+		]);
 		expect(result.ast).toEqual({
 			type: "condition",
 			token: "keyword_date",
@@ -119,29 +119,40 @@ describe("QueryParser", () => {
 			operator: "<"
 		});
 
-		const result4 = parser["parse"]("created=2025-05-05");
-		const token4 = result4.tokens;
-		expect(token4).toEqual([
+		const result2 = parser["parse"]("created=2025-05-05");
+		expect(result2.tokens).toEqual([
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=" },
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-05T23:59:59.999Z"), operator: "<=" }
 		]);
-		expect(result4.ast).toEqual({
+		expect(result2.ast).toEqual({
 			type: "binary",
 			operator: "AND",
 			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=" },
 			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05T23:59:59.999Z"), operator: "<=" }
 		});
 
-		// Month
-		const result2 = parser["parse"]("created<2025-05");
-		const token2 = result2.tokens[0];
-		expect(token2).toEqual({
-			type: "keyword_date",
+		// Date with time
+		const result3 = parser["parse"]("created=2025-05-05 12:00");
+		expect(result3.tokens).toEqual([{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: "=" }]);
+		expect(result3.ast).toEqual({
+			type: "condition",
+			token: "keyword_date",
 			key: "created",
-			value: new Date("2025-05"),
-			operator: "<"
+			value: new Date("2025-05-05 12:00"),
+			operator: "="
 		});
-		expect(result2.ast).toEqual({
+
+		// Month
+		const result4 = parser["parse"]("created<2025-05");
+		expect(result4.tokens).toEqual([
+			{
+				type: "keyword_date",
+				key: "created",
+				value: new Date("2025-05"),
+				operator: "<"
+			}
+		]);
+		expect(result4.ast).toEqual({
 			type: "condition",
 			token: "keyword_date",
 			key: "created",
@@ -150,8 +161,7 @@ describe("QueryParser", () => {
 		});
 
 		const result5 = parser["parse"]("created=2025-05");
-		const token5 = result5.tokens;
-		expect(token5).toEqual([
+		expect(result5.tokens).toEqual([
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-31T23:59:59.999Z"), operator: "<=" }
 		]);
@@ -163,16 +173,16 @@ describe("QueryParser", () => {
 		});
 
 		// Year
-		const result3 = parser["parse"]("created<2025");
-		const token3 = result3.tokens[0];
-		expect(token3).toBeDefined();
-		expect(token3).toEqual({
-			type: "keyword_date",
-			key: "created",
-			value: new Date("2025"),
-			operator: "<"
-		});
-		expect(result3.ast).toEqual({
+		const result6 = parser["parse"]("created<2025");
+		expect(result6.tokens).toEqual([
+			{
+				type: "keyword_date",
+				key: "created",
+				value: new Date("2025"),
+				operator: "<"
+			}
+		]);
+		expect(result6.ast).toEqual({
 			type: "condition",
 			token: "keyword_date",
 			key: "created",
@@ -180,13 +190,12 @@ describe("QueryParser", () => {
 			operator: "<"
 		});
 
-		const result6 = parser["parse"]("created=2025");
-		const token6 = result6.tokens;
-		expect(token6).toEqual([
+		const result7 = parser["parse"]("created=2025");
+		expect(result7.tokens).toEqual([
 			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
 			{ type: "keyword_date", key: "created", value: new Date("2025-12-31T23:59:59.999Z"), operator: "<=" }
 		]);
-		expect(result6.ast).toEqual({
+		expect(result7.ast).toEqual({
 			type: "binary",
 			operator: "AND",
 			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
@@ -210,12 +219,12 @@ describe("QueryParser", () => {
 		});
 
 		// Date with time
-		const result7 = parser["parse"]("created:2025-05-05 12:00..2025-05-10 12:00");
-		expect(result7.tokens).toEqual([
+		const result2 = parser["parse"]("created:2025-05-05 12:00..2025-05-10 12:00");
+		expect(result2.tokens).toEqual([
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=" },
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-10 12:00"), operator: "<=" }
 		]);
-		expect(result7.ast).toEqual({
+		expect(result2.ast).toEqual({
 			type: "binary",
 			operator: "AND",
 			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=" },
@@ -223,12 +232,12 @@ describe("QueryParser", () => {
 		});
 
 		// Month
-		const result2 = parser["parse"]("created:2025-05..2025-07");
-		expect(result2.tokens).toEqual([
+		const result3 = parser["parse"]("created:2025-05..2025-07");
+		expect(result3.tokens).toEqual([
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
 			{ type: "keyword_date", key: "created", value: new Date("2025-07-31T23:59:59.999Z"), operator: "<=" }
 		]);
-		expect(result2.ast).toEqual({
+		expect(result3.ast).toEqual({
 			type: "binary",
 			operator: "AND",
 			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
@@ -236,12 +245,12 @@ describe("QueryParser", () => {
 		});
 
 		// Year
-		const result3 = parser["parse"]("created:2025..2026");
-		expect(result3.tokens).toEqual([
+		const result4 = parser["parse"]("created:2025..2026");
+		expect(result4.tokens).toEqual([
 			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
 			{ type: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" }
 		]);
-		expect(result3.ast).toEqual({
+		expect(result4.ast).toEqual({
 			type: "binary",
 			operator: "AND",
 			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },

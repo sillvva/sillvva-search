@@ -405,7 +405,8 @@ export class QueryParser {
 						});
 					} else {
 						const end = new Date(start);
-						if (dateValue && !dateValue.match(dateTimeRegex)) {
+						const hasTime = dateValue?.match(dateTimeRegex);
+						if (dateValue && !hasTime) {
 							end.setUTCDate(end.getUTCDate() + 1);
 							end.setMilliseconds(-1);
 						} else if (monthValue) {
@@ -422,6 +423,13 @@ export class QueryParser {
 								key: keywordNumeric,
 								operator: op,
 								value: end
+							});
+						} else if (hasTime) {
+							tokens.push({
+								type: "keyword_date",
+								key: keywordNumeric,
+								operator: "=",
+								value: start
 							});
 						} else {
 							tokens.push({
