@@ -199,7 +199,7 @@ export class QueryParser {
 		const monthRangeRegex = `${monthRegex}\\.{2}${monthRegex}`;
 		const yearRangeRegex = `${yearRegex}\\.{2}${yearRegex}`;
 		const numberRangeRegex = `${numberRegex}\\.{2}${numberRegex}`;
-		regexes.push(`(\\w+):(?:${dateRangeRegex}|${monthRangeRegex}|${yearRangeRegex}|${numberRangeRegex})`);
+		regexes.push(`(\\w+)(?::|=)(?:${dateRangeRegex}|${monthRangeRegex}|${yearRangeRegex}|${numberRangeRegex})`);
 
 		// Numeric comparison (keywordNumeric/operator/dateValue/monthValue/yearValue/numericValue)
 		regexes.push(`(\\w+)(:|=|>=|<=|>|<)(?:${dateRegex}|${monthRegex}|${yearRegex}|${numberRegex})`);

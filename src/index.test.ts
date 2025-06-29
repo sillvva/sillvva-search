@@ -301,6 +301,22 @@ describe("QueryParser", () => {
 			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
 			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" }
 		});
+
+		// Negated date range
+		result = parser["parse"]("-created=2025..2026");
+		expect(result.tokens).toEqual([
+			{ type: "open_paren", negated: true },
+			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
+			{ type: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" },
+			{ type: "close_paren" }
+		]);
+		expect(result.ast).toEqual({
+			type: "binary",
+			operator: "AND",
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" },
+			negated: true
+		});
 	});
 
 	it("parses numeric range queries", () => {
