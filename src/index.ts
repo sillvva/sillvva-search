@@ -189,6 +189,7 @@ export class QueryParser {
 		regexes.push(/(?: |^)(-)/g.source);
 
 		const dateRegex = /(\d{4}-\d{2}-\d{2}(?:(?:T| )\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?)/g.source;
+		const dateTimeRegex = /(\d{4}-\d{2}-\d{2}(?:(?:T| )\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?))/g.source;
 		const monthRegex = /(\d{4}-\d{2})/g.source;
 		const yearRegex = /(\d{4})/g.source;
 		const numberRegex = /(-?\d+(?:\.\d+)?)/g.source;
@@ -314,7 +315,7 @@ export class QueryParser {
 						let end = new Date(date2 || month2 || year2 || "");
 						if (isNaN(end.getTime())) continue;
 
-						if (date1) {
+						if (date1 && !date1.match(dateTimeRegex)) {
 							end.setUTCDate(end.getUTCDate() + 1);
 						} else if (month1) {
 							end.setUTCMonth(end.getUTCMonth() + 1);
@@ -402,7 +403,7 @@ export class QueryParser {
 						});
 					} else {
 						const end = new Date(start);
-						if (dateValue) {
+						if (dateValue && !dateValue.match(dateTimeRegex)) {
 							end.setUTCDate(end.getUTCDate() + 1);
 						} else if (monthValue) {
 							end.setUTCMonth(end.getUTCMonth() + 1);
