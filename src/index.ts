@@ -177,13 +177,39 @@ export interface ParseResult {
 export class QueryParser {
 	constructor(protected options?: QueryParserOptions) {}
 
-	// Convert query to tokens
 	private tokenize(query: string): { tokens: Token[]; errors: ParseError[] } {
 		const errors: ParseError[] = [];
 		const tokens: Token[] = [];
+		const regexes: string[] = [];
 
-		const regex =
-			/(?: |^)(-?\()|(\))|(?: |^)(-)|(\w+):(?:(\d{4}-\d{2}-\d{2})\.{2}(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})\.{2}(\d{4}-\d{2})|(\d{4})\.{2}(\d{4})|(-?\d+(?:\.\d+)?)\.{2}(-?\d+(?:\.\d+)?))|(\w+)(:|=|>=|<=|>|<)(?:(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(-?\d+(?:\.\d+)?))|(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)|([^\s]+)/g;
+		// Logical grouping (open/close)
+		regexes.push(/(?: |^)(-?\()|(\))/g.source);
+
+		// Negation (negation)
+		regexes.push(/(?: |^)(-)/g.source);
+
+		const dateRegex = /(\d{4}-\d{2}-\d{2})/g.source;
+		const monthRegex = /(\d{4}-\d{2})/g.source;
+		const yearRegex = /(\d{4})/g.source;
+		const numberRegex = /(-?\d+(?:\.\d+)?)/g.source;
+
+		// Date and number ranges (keywordRange/date1/date2/month1/month2/year1/year2/numeric1/numeric2)
+		const dateRangeRegex = `${dateRegex}\.{2}${dateRegex}`;
+		const monthRangeRegex = `${monthRegex}\.{2}${monthRegex}`;
+		const yearRangeRegex = `${yearRegex}\.{2}${yearRegex}`;
+		const numberRangeRegex = `${numberRegex}\.{2}${numberRegex}`;
+		regexes.push(`(\\w+):(?:${dateRangeRegex}|${monthRangeRegex}|${yearRangeRegex}|${numberRangeRegex})`);
+
+		// Numeric comparison (keywordNumeric/operator/dateValue/monthValue/yearValue/numericValue)
+		regexes.push(`(\\w+)(:|=|>=|<=|>|<)(?:${dateRegex}|${monthRegex}|${yearRegex}|${numberRegex})`);
+
+		// Text (keyword/value/quote/regex)
+		regexes.push(/(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g.source);
+
+		// Any non-whitespace (other)
+		regexes.push(/([^\s]+)/g.source);
+
+		const regex = new RegExp(regexes.join("|"), "g");
 
 		if (!query.match(regex)) {
 			errors.push({
