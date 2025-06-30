@@ -1,7 +1,7 @@
 import type { ExtractTablesWithRelations, Relations, RelationsFilter } from "drizzle-orm";
 import { NumericOperator, ParseResult, QueryParser, QueryParserOptions, type ASTCondition, type ASTNode } from "./index";
 
-type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
+export type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
 
 export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>> extends ParseResult {
 	where: TFilter | undefined;
@@ -20,9 +20,9 @@ export interface ParseDateOptions {
 }
 
 /**
- * A parser for Drizzle ORM that extends `AdvancedSearchParser` to parse advanced search queries into Drizzle-compatible filter objects.
- * @typeParam TRelations - The relations of the Drizzle schema.
- * @typeParam TableName - The name of the table to search. See `AdvancedSearchParserOptions`
+ * A parser for Drizzle ORM that extends {@link QueryParser} to parse advanced search queries into Drizzle-compatible filter objects.
+ * @typeParam TRelations - The relations of the Drizzle schema returned by {@link defineRelations}.
+ * @typeParam TableName - The name of the table to search. See {@link QueryParserOptions}
  *
  * @example
  * You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
@@ -137,6 +137,13 @@ export class DrizzleSearchParser<
 		return op && ({ [op]: value } as unknown as TFilter);
 	}
 
+	/**
+	 * Parse a date condition into a Drizzle filter object.
+	 * @param cond - The {@linkcode ASTCondition} to parse.
+	 * @param options - The options for the date format.
+	 * @param options.dateFormat - The date format to use. Defaults to "date".
+	 * @returns The Drizzle filter object.
+	 */
 	parseDate(cond: ASTCondition, options?: ParseDateOptions): TFilter | undefined {
 		if (!cond.isDate || !cond.operator) return undefined;
 		if (!(cond.value instanceof Date)) return undefined;

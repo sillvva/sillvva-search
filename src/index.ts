@@ -47,17 +47,17 @@ export type Token =
 	| { type: "close_paren" }
 	| { type: "negation" };
 
-type ConditionToken = "keyword" | "keyword_phrase" | "keyword_regex" | "keyword_numeric" | "keyword_date" | "word" | "phrase" | "regex";
+export type ConditionToken = "keyword" | "keyword_phrase" | "keyword_regex" | "keyword_numeric" | "keyword_date" | "word" | "phrase" | "regex";
 
 /**
- * Represents a node in the abstract syntax tree (AST) for a search query.
+ * Represents a node in the Abstract Syntax Tree (AST) for a search query.
  */
 export type ASTNode = BinaryNode | ConditionNode;
 
 /**
- * A binary node in the AST, representing a logical operation (AND/OR) between two nodes.
+ * A binary node in the Abstract Syntax Tree (AST), representing a logical operation (AND/OR) between two nodes.
  */
-interface BinaryNode {
+export interface BinaryNode {
 	type: "binary";
 	operator: LogicalOperator;
 	left: ASTNode;
@@ -66,9 +66,9 @@ interface BinaryNode {
 }
 
 /**
- * A condition node in the AST, representing a single search condition.
+ * A condition node in the Abstract Syntax Tree (AST), representing a single search condition.
  */
-interface ConditionNode {
+export interface ConditionNode {
 	type: "condition";
 	token: ConditionToken;
 	key?: string;
@@ -78,7 +78,7 @@ interface ConditionNode {
 }
 
 /**
- * Represents a flattened search condition extracted from the AST.
+ * Represents a flattened search condition extracted from the Abstract Syntax Tree (AST).
  */
 export interface ASTCondition {
 	/** The key for the condition, if any (e.g., 'author'). */
@@ -98,7 +98,7 @@ export interface ASTCondition {
 }
 
 /**
- * Options for configuring the QueryParser parser.
+ * Options for configuring the {@link QueryParser} parser.
  */
 export interface QueryParserOptions {
 	/**
@@ -149,7 +149,7 @@ function formatParentheses(str: string) {
 /**
  * A parser and analyzer for advanced search queries. Supports tokenization and abstract syntax tree generation.
  *
- * This is a base class intended for creating a parser class. For example, the AST can be parsed into a `where` filter object for a database ORM such as Drizzle.
+ * This is a base class intended for creating a parser class. For example, the Abstract Syntax Tree (AST) can be parsed into a `where` filter object for a database ORM such as Drizzle.
  *
  * @example
  * ```ts
