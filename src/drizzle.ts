@@ -15,6 +15,10 @@ const operatorMap = new Map<NumericOperator, DrizzleOperator>([
 	["<=", "lte"]
 ]);
 
+export interface ParseDateOptions {
+	dateFormat?: "date" | "unix";
+}
+
 /**
  * A parser for Drizzle ORM that extends `AdvancedSearchParser` to parse advanced search queries into Drizzle-compatible filter objects.
  * @typeParam TRelations - The relations of the Drizzle schema.
@@ -133,12 +137,16 @@ export class DrizzleSearchParser<
 		return op && ({ [op]: value } as unknown as TFilter);
 	}
 
-	parseDate(cond: ASTCondition): TFilter | undefined {
+	parseDate(cond: ASTCondition, options?: ParseDateOptions): TFilter | undefined {
 		if (!cond.isDate || !cond.operator) return undefined;
 		if (!(cond.value instanceof Date)) return undefined;
 
 		const op = operatorMap.get(cond.operator);
 		const value = cond.value;
+
+		if (options?.dateFormat === "unix") {
+			return op && ({ [op]: Math.floor(value.getTime() / 1000) } as unknown as TFilter);
+		}
 
 		return op && ({ [op]: value } as unknown as TFilter);
 	}
