@@ -16,6 +16,10 @@ By transforming these complex strings into a structured representation like an A
 
 While the package includes other classes, such as `JSONSearchParser` and `DrizzleSearchParser`, these are primarily illustrative examples demonstrating how you can integrate `QueryParser` into different search scenarios. The true value and primary focus of `@sillvva/search` is the `QueryParser` class.
 
+## Demo
+
+You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
+
 # Table of Contents
 
 - [Installation](#installation)
