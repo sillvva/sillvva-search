@@ -1,6 +1,6 @@
 # Introduction
 
-Users often need to specify more nuanced criteria than basic keyword seaches, such as searching within specific fields, excluding certain terms, or applying logical operators (AND, OR, NOT). Parsing these types of queries can be tricky. Some websites, like [The Gatherer](https://gatherer.wizards.com/advanced-search) (Magic the Gathering's card database), choose to provide "Advanced Search" forms that provide multiple fields for the user to filter the search results. Others like [Scryfall](https://scryfall.com/docs/syntax) choose to provide a single field that interprets human-readable query strings with a custom syntax into search results.
+Users often need to specify more nuanced criteria than basic keyword searches, such as searching within specific fields, excluding certain terms, or applying logical operators (AND, OR, NOT). Parsing these types of queries can be tricky. Some websites, like [The Gatherer](https://gatherer.wizards.com/advanced-search) (Magic the Gathering's card database), choose to provide "Advanced Search" forms that provide multiple fields for the user to filter the search results. Others like [Scryfall](https://scryfall.com/docs/syntax) choose to provide a single field that interprets human-readable query strings with a custom syntax into search results.
 
 The latter option is what `QueryParser` was designed to assist with. It addresses this need by providing a programmatic way to interpret human-readable query strings into a structured, easily consumable format. Included is a custom search syntax that features:
 
@@ -25,6 +25,7 @@ You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on
 - [Installation](#installation)
 - [Classes](#classes)
   - [The `QueryParser` Class](#the-queryparser-class)
+    - [Class Constructor](#class-constructor)
     - [Syntax Reference](#syntax-reference)
     - [Type Reference](#type-reference)
       - [`Token`](#token)
@@ -90,6 +91,13 @@ console.log(result.astConditions);
  */
 ```
 
+### Class Constructor
+
+The only parameter is an optional options object with two properties:
+
+- `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
+- `defaultKey` allows you to define a default key for "word", "phrase", and "regex" tokens as defined in the [syntax reference](#syntax-reference). If not provided, the key for the `ConditionNode` will be `undefined`.
+
 ### Syntax Reference
 
 | Syntax                                                    | Description                                                                                                                                                                                                                  |
@@ -102,7 +110,7 @@ console.log(result.astConditions);
 | `key:/^regex$/`                                           | This syntax combines the properties of the "keyword" syntax and the "regex" syntax.                                                                                                                                          |
 | `key=10`<br>`key>=2024-01-01`<br>`key>=2024-01-01`        | When using numeric operators for numbers or dates, the token will become a "keyword_numeric" or "keyword_date" token with the operator provided. See below<sup>1</sup> for supported date formats.                           |
 | ` key:10..20`<br>`key:2024-01-01 00:00..2024-01-15 12:00` | Range queries allow you to specify a range of values. For ranges, use `key:start..end`. The result will be two "keyword_numeric" or "keyword_date" tokens. See below<sup>1</sup> for supported date formats.                 |
-| `AND` and `OR`                                            | You can use `AND` and `OR` operators between tokens. When no provider is specified, `AND` is implied.                                                                                                                        |
+| `AND` and `OR`                                            | You can use `AND` and `OR` operators between tokens. When no operator is specified, `AND` is implied.                                                                                                                        |
 | `foo (bar or baz)`                                        | Tokens can be grouped together using parentheses. Groups can also be nested.                                                                                                                                                 |
 | `-`                                                       | The negator character can be used to negate any "word", "keyword", or "phrase" token. Example: `-word -"phrase"`<br><br>It can also be used to negate a group. Example: `-(word1 OR word2)`                                  |
 
@@ -252,7 +260,7 @@ The constructor takes two parameters:
 - A function that parses individual `ASTCondition` objects into Drizzle-compatible filter objects. By providing relations to the class, the return statement will provide autocomplete as if you were building a `findFirst` or `findMany` where object directly. Returning `undefined` will remove the condition from the final where object.
 - An options object with two properties:
   - `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
-  - `defaultKey` allows you to define a default key for "word" tokens as defined in the [syntax reference](#syntax-reference).
+  - `defaultKey` allows you to define a default key for "word", "phrase", and "regex" tokens as defined in the [syntax reference](#syntax-reference). If not provided, the key for the `ConditionNode` will be `undefined`.
 
 The class has three methods:
 

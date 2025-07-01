@@ -282,6 +282,7 @@ export class QueryParser {
 				} else if (keyword && (value || quote || regex)) {
 					// Filter out invalid keys if validKeys is specified
 					if (this.options?.validKeys && !this.options.validKeys.includes(keyword)) {
+						if (tokens.at(-1)?.type === "negation") tokens.pop();
 						errors.push({
 							type: "invalid_key",
 							message: `Invalid key: ${keyword}`,
@@ -313,6 +314,7 @@ export class QueryParser {
 					}
 				} else if (keywordRange) {
 					if (this.options?.validKeys && !this.options.validKeys.includes(keywordRange)) {
+						if (tokens.at(-1)?.type === "negation") tokens.pop();
 						errors.push({
 							type: "invalid_key",
 							message: `Invalid key: ${keywordRange}`,
@@ -379,6 +381,7 @@ export class QueryParser {
 				} else if (keywordNumeric && operator && numericValue) {
 					// Filter out invalid keys if validKeys is specified
 					if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
+						if (tokens.at(-1)?.type === "negation") tokens.pop();
 						errors.push({
 							type: "invalid_key",
 							message: `Invalid key: ${keywordNumeric}`,
@@ -401,6 +404,7 @@ export class QueryParser {
 				} else if (keywordNumeric && operator && (dateValue || monthValue || yearValue)) {
 					// Filter out invalid keys if validKeys is specified
 					if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
+						if (tokens.at(-1)?.type === "negation") tokens.pop();
 						errors.push({
 							type: "invalid_key",
 							message: `Invalid key: ${keywordNumeric}`,
@@ -493,6 +497,26 @@ export class QueryParser {
 						tokens.push({ type: "regex", value: regex });
 					}
 				}
+			}
+		}
+
+		// Remove consecutive operators or parentheses
+		for (let i = 0; i < tokens.length; i++) {
+			if (["open_paren"].includes(tokens[i]?.type || "") && ["close_paren"].includes(tokens[i + 1]?.type || "")) {
+				tokens.splice(i, 2);
+				if (tokens[i - 1]?.type === "negation") {
+					tokens.splice(i - 1, 1);
+				}
+				i--;
+			} else if (["operator"].includes(tokens[i]?.type || "") && ["operator"].includes(tokens[i + 1]?.type || "")) {
+				tokens.splice(i, 1);
+				i--;
+			} else if (["open_paren"].includes(tokens[i]?.type || "") && ["operator"].includes(tokens[i + 1]?.type || "")) {
+				tokens.splice(i + 1, 1);
+				i--;
+			} else if (["operator"].includes(tokens[i]?.type || "") && ["close_paren"].includes(tokens[i + 1]?.type || "")) {
+				tokens.splice(i, 1);
+				i--;
 			}
 		}
 
