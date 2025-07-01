@@ -133,12 +133,9 @@ export interface ParseResult {
 	metadata: ParseMetadata;
 }
 
-function formatParentheses(str: string) {
+function normalizeQuery(str: string) {
 	return (
 		str
-			// Add spaces around parentheses
-			.replace(/\(/g, " ( ")
-			.replace(/\)/g, " ) ")
 			// Normalize multiple spaces to single space
 			.replace(/\s+/g, " ")
 			// Remove leading/trailing spaces
@@ -196,7 +193,7 @@ export class QueryParser {
 		const regexes: string[] = [];
 
 		// Logical grouping (open/close)
-		regexes.push(/(?: |^)(-?\()|(\))/g.source);
+		regexes.push(/(?: |^)?(-?\()|(\))/g.source);
 
 		// Negation (negation)
 		regexes.push(/(?: |^)(-)/g.source);
@@ -508,14 +505,11 @@ export class QueryParser {
 					tokens.splice(i - 1, 1);
 				}
 				i--;
-			} else if (["operator"].includes(tokens[i]?.type || "") && ["operator"].includes(tokens[i + 1]?.type || "")) {
+			} else if (["operator"].includes(tokens[i]?.type || "") && ["operator", "close_paren"].includes(tokens[i + 1]?.type || "")) {
 				tokens.splice(i, 1);
 				i--;
 			} else if (["open_paren"].includes(tokens[i]?.type || "") && ["operator"].includes(tokens[i + 1]?.type || "")) {
 				tokens.splice(i + 1, 1);
-				i--;
-			} else if (["operator"].includes(tokens[i]?.type || "") && ["close_paren"].includes(tokens[i + 1]?.type || "")) {
-				tokens.splice(i, 1);
 				i--;
 			}
 		}
@@ -649,7 +643,7 @@ export class QueryParser {
 	 */
 	protected parse(query: string): ParseResult {
 		const start = performance.now();
-		query = formatParentheses(query);
+		query = normalizeQuery(query);
 		const { tokens, errors } = this.tokenize(query);
 		const ast = this.buildAST(tokens);
 		const astConditions = this.extractConditions(ast);
