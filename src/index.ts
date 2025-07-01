@@ -510,7 +510,6 @@ export class QueryParser {
 				i--;
 			} else if (["open_paren"].includes(tokens[i]?.type || "") && ["operator"].includes(tokens[i + 1]?.type || "")) {
 				tokens.splice(i + 1, 1);
-				i--;
 			}
 		}
 
