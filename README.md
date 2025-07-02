@@ -133,18 +133,18 @@ export type LogicalOperator = "AND" | "OR";
 export type NumericOperator = "=" | ">" | "<" | ">=" | "<=";
 
 export type Token =
-	| { type: "keyword"; key: string; value: string }
-	| { type: "keyword_phrase"; key: string; value: string }
-	| { type: "keyword_regex"; key: string; value: string }
-	| { type: "keyword_numeric"; key: string; operator: NumericOperator; value: number }
-	| { type: "keyword_date"; key: string; operator: NumericOperator; value: Date }
-	| { type: "word"; value: string }
-	| { type: "phrase"; value: string }
-	| { type: "regex"; value: string }
-	| { type: "operator"; value: LogicalOperator }
-	| { type: "open_paren"; negated?: boolean }
-	| { type: "close_paren" }
-	| { type: "negation" };
+	| { type: "keyword"; key: string; value: string; position: number }
+	| { type: "keyword_phrase"; key: string; value: string; position: number }
+	| { type: "keyword_regex"; key: string; value: string; position: number }
+	| { type: "keyword_numeric"; key: string; operator: NumericOperator; value: number; position: number }
+	| { type: "keyword_date"; key: string; operator: NumericOperator; value: Date; position: number }
+	| { type: "word"; value: string; position: number }
+	| { type: "phrase"; value: string; position: number }
+	| { type: "regex"; value: string; position: number }
+	| { type: "operator"; value: LogicalOperator; position: number }
+	| { type: "open_paren"; negated?: boolean; position: number }
+	| { type: "close_paren"; position: number }
+	| { type: "negation"; position: number };
 ```
 
 #### `ASTNode`
@@ -167,6 +167,7 @@ interface ConditionNode {
 	token: ConditionToken;
 	key?: string;
 	value: string | number | Date;
+	position: number;
 	negated?: boolean;
 	operator?: NumericOperator;
 }
@@ -182,6 +183,8 @@ export interface ASTCondition {
 	key?: string;
 	/** The value for the condition (e.g., 'Tolkien'). */
 	value: string | number | Date;
+	/** The position of the condition in the query string. */
+	position: number;
 	/** Whether the condition is negated. */
 	isNegated: boolean;
 	/** Whether the value is a regex pattern. */
@@ -255,12 +258,12 @@ The class requires two type parameters:
 - The relations from the `defineRelations` function in Drizzle's RQB v2.
 - The table name as a string constant type
 
-The constructor takes two parameters:
+The constructor takes an options object with four properties:
 
-- A function that parses individual `ASTCondition` objects into Drizzle-compatible filter objects. By providing relations to the class, the return statement will provide autocomplete as if you were building a `findFirst` or `findMany` where object directly. Returning `undefined` will remove the condition from the final where object.
-- An options object with two properties:
-  - `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
-  - `defaultKey` allows you to define a default key for "word", "phrase", and "regex" tokens as defined in the [syntax reference](#syntax-reference). If not provided, the key for the `ConditionNode` will be `undefined`.
+- Required: `filterFn` parses individual `ASTCondition` objects into Drizzle-compatible filter objects. By providing relations to the class, the return statement will provide autocomplete as if you were building a `findFirst` or `findMany` where object directly. Returning `undefined` will remove the condition from the final where object.
+- Optional: `orderFn` parses `ASTCondition` objects where the key is either `asc` or `desc` into Drizzle-compatible `orderBy` objects and merges them together.
+- Optional: `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
+- Optional: `defaultKey` allows you to define a default key for "word", "phrase", and "regex" tokens as defined in the [syntax reference](#syntax-reference). If not provided, the key for the `ConditionNode` will be `undefined`.
 
 The class has three methods:
 
@@ -275,8 +278,10 @@ const validKeys = ["name", "age"] as const;
 const defaultKey = "name" as const satisfies (typeof validKeys)[number];
 
 // Instantiate the parser
-const parser = new DrizzleSearchParser<typeof relations, "user">(
-	(cond) => {
+const parser = new DrizzleSearchParser<typeof relations, "user">({
+	validKeys,
+	defaultKey,
+	filterFn: (cond) => {
 		const key = (ast.key?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
 		if (cond.key === "name") {
 			return { name: { ilike: `%${cond.value}%` } };
@@ -285,19 +290,30 @@ const parser = new DrizzleSearchParser<typeof relations, "user">(
 			const op = parser.parseNumeric(cond);
 			return op && { age: op };
 		}
-		return undefined;
-	},
-	{ validKeys, defaultKey }
-);
+		return;
+	}
+	orderFn: (cond) => {
+		const key = (String(ast.value)?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
+		switch(key) {
+			case "name":
+			case "age":
+				return { [key]: ast.key === "asc" : "asc" : "desc" };
+		}
+
+		return;
+	}
+});
 
 // Parse a query string ✅
-const { where } = parser.parse("name:John AND age>=30");
+const { where, orderBy } = parser.parse("name:John age>=30 desc:age");
 // where: { AND: [{ name: { ilike: "%John%" } }, { age: { gte: 30 } }] }
+// orderBy: { age: "desc" }
 
 // Invalid age ❌
-const { where } = parser.parse("name:John age:thirty");
+const { where, orderBy } = parser.parse("name:John age:thirty");
 // where: { AND: [{ name: { ilike: "%John%" } }] }
+// orderBy: undefined
 
 // Usage
-const users = await db.query.user.findMany({ where });
+const users = await db.query.user.findMany({ where, orderBy });
 ```

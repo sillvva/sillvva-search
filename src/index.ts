@@ -34,18 +34,18 @@ export type NumericOperator = "=" | ">" | "<" | ">=" | "<=";
  * Represents a token parsed from the search query string.
  */
 export type Token =
-	| { type: "keyword"; key: string; value: string }
-	| { type: "keyword_phrase"; key: string; value: string }
-	| { type: "keyword_regex"; key: string; value: string }
-	| { type: "keyword_numeric"; key: string; operator: NumericOperator; value: number }
-	| { type: "keyword_date"; key: string; operator: NumericOperator; value: Date }
-	| { type: "word"; value: string }
-	| { type: "phrase"; value: string }
-	| { type: "regex"; value: string }
-	| { type: "operator"; value: LogicalOperator }
-	| { type: "open_paren"; negated?: boolean }
-	| { type: "close_paren" }
-	| { type: "negation" };
+	| { type: "keyword"; key: string; value: string; position: number }
+	| { type: "keyword_phrase"; key: string; value: string; position: number }
+	| { type: "keyword_regex"; key: string; value: string; position: number }
+	| { type: "keyword_numeric"; key: string; operator: NumericOperator; value: number; position: number }
+	| { type: "keyword_date"; key: string; operator: NumericOperator; value: Date; position: number }
+	| { type: "word"; value: string; position: number }
+	| { type: "phrase"; value: string; position: number }
+	| { type: "regex"; value: string; position: number }
+	| { type: "operator"; value: LogicalOperator; position: number }
+	| { type: "open_paren"; negated?: boolean; position: number }
+	| { type: "close_paren"; position: number }
+	| { type: "negation"; position: number };
 
 export type ConditionToken = "keyword" | "keyword_phrase" | "keyword_regex" | "keyword_numeric" | "keyword_date" | "word" | "phrase" | "regex";
 
@@ -73,6 +73,7 @@ export interface ConditionNode {
 	token: ConditionToken;
 	key?: string;
 	value: string | number | Date;
+	position: number;
 	negated?: boolean;
 	operator?: NumericOperator;
 }
@@ -85,6 +86,8 @@ export interface ASTCondition {
 	key?: string;
 	/** The value for the condition (e.g., 'Tolkien'). */
 	value: string | number | Date;
+	/** The position of the condition in the query string. */
+	position: number;
 	/** Whether the condition is negated. */
 	isNegated: boolean;
 	/** Whether the value is a regex pattern. */
@@ -310,11 +313,11 @@ export class QueryParser {
 				}
 
 				if (open) {
-					tokens.push({ type: "open_paren", negated: open.startsWith("-") });
+					tokens.push({ type: "open_paren", negated: open.startsWith("-"), position: match.index });
 				} else if (close) {
-					tokens.push({ type: "close_paren" });
+					tokens.push({ type: "close_paren", position: match.index });
 				} else if (negation) {
-					tokens.push({ type: "negation" });
+					tokens.push({ type: "negation", position: match.index });
 				} else if (keyword && (value || quote || regex)) {
 					// Filter out invalid keys if validKeys is specified
 					if (this.options?.validKeys && !this.options.validKeys.includes(keyword)) {
@@ -333,19 +336,22 @@ export class QueryParser {
 						tokens.push({
 							type: "keyword",
 							key: keyword,
-							value: value
+							value: value,
+							position: match.index
 						});
 					} else if (quote) {
 						tokens.push({
 							type: "keyword_phrase",
 							key: keyword,
-							value: quote
+							value: quote,
+							position: match.index
 						});
 					} else if (regex) {
 						tokens.push({
 							type: "keyword_regex",
 							key: keyword,
-							value: regex
+							value: regex,
+							position: match.index
 						});
 					}
 				} else if (keywordRange) {
@@ -380,21 +386,23 @@ export class QueryParser {
 
 						if (tokens.at(-1)?.type === "negation") {
 							tokens.pop();
-							tokens.push({ type: "open_paren", negated: true });
-						} else tokens.push({ type: "open_paren" });
+							tokens.push({ type: "open_paren", negated: true, position: match.index });
+						} else tokens.push({ type: "open_paren", position: match.index });
 						tokens.push({
 							type: "keyword_date",
 							key: keywordRange,
 							operator: ">=",
-							value: start
+							value: start,
+							position: match.index
 						});
 						tokens.push({
 							type: "keyword_date",
 							key: keywordRange,
 							operator: "<=",
-							value: end
+							value: end,
+							position: match.index
 						});
-						tokens.push({ type: "close_paren" });
+						tokens.push({ type: "close_paren", position: match.index });
 					} else if (numeric1 && numeric2) {
 						let start = parseFloat(numeric1);
 						if (isNaN(start)) continue;
@@ -405,13 +413,15 @@ export class QueryParser {
 							type: "keyword_numeric",
 							key: keywordRange,
 							operator: ">=",
-							value: start
+							value: start,
+							position: match.index
 						});
 						tokens.push({
 							type: "keyword_numeric",
 							key: keywordRange,
 							operator: "<=",
-							value: end
+							value: end,
+							position: match.index
 						});
 					}
 				} else if (keywordNumeric && operator && numericValue) {
@@ -435,7 +445,8 @@ export class QueryParser {
 						type: "keyword_numeric",
 						key: keywordNumeric,
 						operator: operator === ":" ? "=" : (operator as NumericOperator),
-						value: value
+						value: value,
+						position: match.index
 					});
 				} else if (keywordNumeric && operator && (dateValue || monthValue || yearValue)) {
 					// Filter out invalid keys if validKeys is specified
@@ -460,7 +471,8 @@ export class QueryParser {
 							type: "keyword_date",
 							key: keywordNumeric,
 							operator: op,
-							value: start
+							value: start,
+							position: match.index
 						});
 					} else {
 						const end = new Date(start);
@@ -481,56 +493,60 @@ export class QueryParser {
 								type: "keyword_date",
 								key: keywordNumeric,
 								operator: op,
-								value: end
+								value: end,
+								position: match.index
 							});
 						} else if (hasTime) {
 							tokens.push({
 								type: "keyword_date",
 								key: keywordNumeric,
 								operator: "=",
-								value: start
+								value: start,
+								position: match.index
 							});
 						} else {
 							if (tokens.at(-1)?.type === "negation") {
 								tokens.pop();
-								tokens.push({ type: "open_paren", negated: true });
-							} else tokens.push({ type: "open_paren" });
+								tokens.push({ type: "open_paren", negated: true, position: match.index });
+							} else tokens.push({ type: "open_paren", position: match.index });
 							tokens.push({
 								type: "keyword_date",
 								key: keywordNumeric,
 								operator: ">=",
-								value: start
+								value: start,
+								position: match.index
 							});
 							tokens.push({
 								type: "keyword_date",
 								key: keywordNumeric,
 								operator: "<=",
-								value: end
+								value: end,
+								position: match.index
 							});
-							tokens.push({ type: "close_paren" });
+							tokens.push({ type: "close_paren", position: match.index });
 						}
 					}
 				} else if (value) {
 					const upperValue = value.toUpperCase();
 
 					if (upperValue === "AND" || upperValue === "OR") {
-						tokens.push({ type: "operator", value: upperValue });
+						tokens.push({ type: "operator", value: upperValue, position: match.index });
 					} else if (this.options?.defaultKey) {
-						tokens.push({ type: "keyword", key: this.options.defaultKey, value });
+						tokens.push({ type: "keyword", key: this.options.defaultKey, value, position: match.index });
 					} else {
-						tokens.push({ type: "word", value });
+						tokens.push({ type: "word", value, position: match.index });
 					}
 				} else if (quote) {
 					if (this.options?.defaultKey) {
-						tokens.push({ type: "keyword_phrase", key: this.options.defaultKey, value: quote });
+						tokens.push({ type: "keyword_phrase", key: this.options.defaultKey, value: quote, position: match.index });
 					} else {
-						tokens.push({ type: "phrase", value: quote });
+						tokens.push({ type: "phrase", value: quote, position: match.index });
 					}
 				} else if (regex) {
 					if (this.options?.defaultKey) {
-						tokens.push({ type: "keyword_regex", key: this.options.defaultKey, value: regex });
+						tokens.push({ type: "keyword_regex", key: this.options.defaultKey, value: regex, position: match.index });
 					} else {
-						tokens.push({ type: "regex", value: regex });
+						tokens.push({ type: "regex", value: regex, position: match.index });
 					}
 				}
 			}
@@ -615,7 +631,8 @@ export class QueryParser {
 						type: "condition",
 						token: token.type,
 						key: token.key,
-						value: token.value
+						value: token.value,
+						position: token.position
 					};
 
 				case "keyword_numeric":
@@ -625,13 +642,14 @@ export class QueryParser {
 						token: token.type,
 						key: token.key,
 						value: token.value,
-						operator: token.operator
+						operator: token.operator,
+						position: token.position
 					};
 
 				case "word":
 				case "phrase":
 				case "regex":
-					return { type: "condition", token: token.type, value: token.value };
+					return { type: "condition", token: token.type, value: token.value, position: token.position };
 
 				default:
 					return null;
@@ -666,7 +684,8 @@ export class QueryParser {
 							isRegex: ast.token.includes("regex"),
 							isNumeric: ast.token === "keyword_numeric",
 							isDate: ast.token === "keyword_date",
-							operator: ast.operator
+							operator: ast.operator,
+							position: ast.position
 						}
 					];
 				}

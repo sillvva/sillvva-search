@@ -1,13 +1,18 @@
-import type { ExtractTablesWithRelations, Relations, RelationsFilter } from "drizzle-orm";
+import type { ExtractTablesWithRelations, Relations, RelationsFilter, RelationsOrder } from "drizzle-orm";
 import { QueryParser, type ASTCondition, type ASTNode, type NumericOperator, type ParseResult, type QueryParserOptions } from "./index";
 
 export type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
 
-export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>> extends Omit<ParseResult, "astConditions"> {
+export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>, TOrder extends RelationsOrder<any>>
+	extends Omit<ParseResult, "astConditions"> {
 	/**
 	 * The Drizzle-compatible filter object.
 	 */
 	where: TFilter | undefined;
+	/**
+	 * The Drizzle-compatible orderBy object.
+	 */
+	orderBy: TOrder | undefined;
 	/**
 	 * Conditions that were included and excluded from the Drizzle-compatible filter object.
 	 */
@@ -15,11 +20,15 @@ export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>> e
 		/**
 		 * Conditions that were included in the Drizzle-compatible filter object.
 		 */
-		included: ASTCondition[];
+		filtered: ASTCondition[];
 		/**
 		 * Conditions that were excluded from the Drizzle-compatible filter object.
 		 */
 		excluded: ASTCondition[];
+		/**
+		 * Conditions that were used to sort the results.
+		 */
+		sort: SortCondition[];
 	};
 }
 
@@ -35,6 +44,10 @@ export interface ParseDateOptions {
 	dateFormat?: "date" | "unix";
 }
 
+export interface SortCondition extends ASTCondition {
+	key: "asc" | "desc";
+}
+
 /**
  * A parser for Drizzle ORM that extends {@link QueryParser} to parse advanced search queries into Drizzle-compatible filter objects.
  * @typeParam TRelations - The relations of the Drizzle schema returned by {@link defineRelations}.
@@ -45,59 +58,87 @@ export interface ParseDateOptions {
  *
  * ```ts
  * import { DrizzleSearchParser } from "@sillvva/search/drizzle";
- *
- * // Example Drizzle schema and relations (pseudo-code)
  * import { relations } from "./schema";
  *
  * const validKeys = ["name", "age"] as const;
  * const defaultKey = "name" as const satisfies (typeof validKeys)[number];
  *
  * // Instantiate the parser
- * const parser = new DrizzleSearchParser<typeof relations, "user">((cond) => {
- * 	 const key = (ast.key?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
- *   if (key === "name") {
- *     return { name: { ilike: `%${cond.value}%` } };
- *   }
- *   if (key === "age") {
- *     const op = parser.parseNumeric(cond);
- *     return op && { age: op };
- *   }
- *   return undefined;
- * }, { validKeys, defaultKey });
+ * const parser = new DrizzleSearchParser<typeof relations, "user">({
+ * 	validKeys,
+ * 	defaultKey,
+ * 	filterFn: (cond) => {
+ * 		const key = (ast.key?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
+ * 		if (cond.key === "name") {
+ * 			return { name: { ilike: `%${cond.value}%` } };
+ * 		}
+ * 		if (cond.key === "age") {
+ * 			const op = parser.parseNumeric(cond);
+ * 			return op && { age: op };
+ * 		}
+ * 		return;
+ * 	}
+ * 	orderFn: (cond) => {
+ * 		const key = (String(ast.value)?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
+ * 		switch(key) {
+ * 			case "name":
+ * 			case "age":
+ * 				return { [key]: ast.key === "asc" : "asc" : "desc" };
+ * 		}
+ *
+ * 		return;
+ * 	}
+ * });
  *
  * // Parse a query string ✅
- * const { where } = parser.parse("John age>=30");
+ * const { where, orderBy } = parser.parse("name:John age>=30 desc:age");
  * // where: { AND: [{ name: { ilike: "%John%" } }, { age: { gte: 30 } }] }
+ * // orderBy: { age: "desc" }
  *
  * // Invalid age ❌
- * const { where } = parser.parse("John age:thirty");
+ * const { where, orderBy } = parser.parse("name:John age:thirty");
  * // where: { AND: [{ name: { ilike: "%John%" } }] }
+ * // orderBy: undefined
  *
  * // Usage
- * const users = await db.query.user.findMany({
- *   where
- * });
+ * const users = await db.query.user.findMany({ where, orderBy });
  * ```
  */
 export class DrizzleSearchParser<
 	TRelations extends Relations<any, any, any>,
 	TableName extends keyof TRSchema,
 	TRSchema extends ExtractTablesWithRelations<TRelations> = ExtractTablesWithRelations<TRelations>,
-	TFilter extends RelationsFilter<TRSchema[TableName], TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>
+	TFilter extends RelationsFilter<TRSchema[TableName], TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>,
+	TOrder extends RelationsOrder<TRSchema[TableName]["columns"]> = RelationsOrder<TRSchema[TableName]["columns"]>,
+	DrizzleParserOptions extends QueryParserOptions & {
+		filterFn: (ast: ASTCondition) => TFilter | undefined;
+		orderFn?: (ast: SortCondition) => TOrder | undefined;
+	} = QueryParserOptions & { filterFn: (ast: ASTCondition) => TFilter | undefined; orderFn?: (ast: ASTCondition) => TOrder | undefined }
 > extends QueryParser {
 	/**
-	 * @param conditionBuilderFn - The function to build the Drizzle filter object from the AST condition.
-	 * @param options - The options for the parser. See {@link QueryParserOptions}
+	 * @param options - The options for the parser.
+	 * @param options.filterFn - The function to build the Drizzle filter object from the AST condition.
+	 * @param options.orderFn - The function to build the Drizzle order object from the AST condition.
+	 * @param options.validKeys - The valid keys for the parser.
+	 * @param options.defaultKey - The default key for the parser.
 	 */
-	constructor(private readonly conditionBuilderFn: (ast: ASTCondition) => TFilter | undefined, options?: QueryParserOptions) {
+	constructor(protected options: DrizzleParserOptions) {
+		if (options.validKeys) {
+			if (!options.validKeys.includes("asc")) options.validKeys = [...options.validKeys, "asc"] as const;
+			if (!options.validKeys.includes("desc")) options.validKeys = [...options.validKeys, "desc"] as const;
+		}
 		super(options);
+	}
+
+	get validKeys() {
+		return this.options.validKeys;
 	}
 
 	// Build where clause object from Abstract Syntax Tree
 	private buildWhereClause(
 		ast: ASTNode | null,
 		parentNegated = false,
-		included: ASTCondition[] = [],
+		filtered: ASTCondition[] = [],
 		excluded: ASTCondition[] = []
 	): TFilter | undefined {
 		if (!ast) return;
@@ -107,8 +148,8 @@ export class DrizzleSearchParser<
 		const buildClause = (node: ASTNode): TFilter | undefined => {
 			switch (node.type) {
 				case "binary": {
-					const leftClause = this.buildWhereClause(node.left, isNegated, included, excluded);
-					const rightClause = this.buildWhereClause(node.right, isNegated, included, excluded);
+					const leftClause = this.buildWhereClause(node.left, isNegated, filtered, excluded);
+					const rightClause = this.buildWhereClause(node.right, isNegated, filtered, excluded);
 
 					if (!leftClause || !rightClause) {
 						if (leftClause) return leftClause;
@@ -130,10 +171,11 @@ export class DrizzleSearchParser<
 						isNegated,
 						isNumeric: node.token === "keyword_numeric",
 						isDate: node.token === "keyword_date",
-						operator: node.operator
+						operator: node.operator,
+						position: node.position
 					};
-					const filter = this.conditionBuilderFn(cond);
-					if (filter) included.push(cond);
+					const filter = this.options.filterFn(cond);
+					if (filter) filtered.push(cond);
 					else excluded.push(cond);
 					return filter;
 				}
@@ -197,21 +239,37 @@ export class DrizzleSearchParser<
 	 * @param query - The search query string.
 	 * @returns The parsed search query. See {@link DrizzleParseResult} for the return type.
 	 */
-	parse(query: string): DrizzleParseResult<TFilter> {
+	parse(query: string): DrizzleParseResult<TFilter, TOrder> {
 		const { ast, tokens, metadata } = super.parse(query);
 
-		const included: ASTCondition[] = [];
+		const filtered: ASTCondition[] = [];
 		const excluded: ASTCondition[] = [];
-		const where = this.buildWhereClause(ast, false, included, excluded);
+		const where = this.buildWhereClause(ast, false, filtered, excluded);
+
+		const sort: SortCondition[] = [];
+		const orderBy =
+			this.options.orderFn && excluded && excluded.filter((cond) => cond.key === "asc" || cond.key === "desc").length > 0
+				? excluded.reduce((acc, cond) => {
+						if (cond.key === "asc" || cond.key === "desc") {
+							const order = this.options.orderFn?.(cond as SortCondition);
+							if (order) sort.push(cond as SortCondition);
+							return order ? { ...acc, ...order } : acc;
+						}
+
+						return acc;
+				  }, {} as TOrder)
+				: undefined;
 
 		return {
 			tokens,
 			ast,
 			metadata,
 			where,
+			orderBy,
 			conditions: {
-				included,
-				excluded
+				filtered: filtered,
+				excluded: excluded.filter((cond) => !sort.some((s) => s.key === cond.key && s.value === cond.value)),
+				sort
 			}
 		};
 	}
