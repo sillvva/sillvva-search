@@ -1,7 +1,13 @@
-import { QueryParser, type ASTNode } from "./index";
+import { sorter } from "@sillvva/utils";
+import { ASTCondition, QueryParser, type ASTNode } from "./index";
+
+interface SortCondition extends ASTCondition {
+	key: "asc" | "desc";
+	value: string;
+}
 
 /**
- * A parser for filtering arrays of JSON data using advanced search queries.
+ A parser for filtering arrays of JSON data using advanced search queries.
  * @typeParam T - The type of the JSON objects in the array.
  *
  * @example
@@ -22,6 +28,13 @@ import { QueryParser, type ASTNode } from "./index";
  * const parser = new JSONSearchParser(books, { validKeys: ["title", "author"], defaultKey: "title" });
  * const result = parser.filter('author:tolkien -hobbit');
  * // result: [{ title: "The Lord of the Rings", author: "Tolkien" }]
+ *
+ * const result = parser.filter("asc:author asc:title");
+ * // result: [
+ * //   { title: "1984", author: "Orwell" },
+ * //   { title: "The Hobbit", author: "Tolkien" },
+ * //   { title: "The Lord of the Rings", author: "Tolkien" }
+ * // ]
  */
 export class JSONSearchParser<T extends Record<any, any>> extends QueryParser {
 	private data: T[];
@@ -31,6 +44,10 @@ export class JSONSearchParser<T extends Record<any, any>> extends QueryParser {
 	 * @param options Configuration options for the parser.
 	 */
 	constructor(data: T[], options?: { validKeys?: readonly (keyof T & string)[]; defaultKey?: keyof T & string }) {
+		if (options?.validKeys) {
+			if (!options.validKeys.includes("asc")) options.validKeys = [...options.validKeys, "asc"] as const;
+			if (!options.validKeys.includes("desc")) options.validKeys = [...options.validKeys, "desc"] as const;
+		}
 		super(options);
 		this.data = data;
 	}
@@ -60,6 +77,7 @@ export class JSONSearchParser<T extends Record<any, any>> extends QueryParser {
 			const result = ast.operator === "AND" ? left && right : left || right;
 			return ast.negated ? !result : result;
 		} else if (ast.type === "condition") {
+			if (ast.key === "asc" || ast.key === "desc") return true;
 			let value: unknown = ast.key ? item[ast.key] : undefined;
 			if (typeof value !== "string") value = String(value ?? "");
 			if (ast.key && this.options?.validKeys?.length && !this.options.validKeys.includes(ast.key)) return false;
@@ -92,8 +110,22 @@ export class JSONSearchParser<T extends Record<any, any>> extends QueryParser {
 	 * @returns The filtered array of JSON objects matching the query.
 	 */
 	filter(query: string): T[] {
-		const { ast } = super._parse(query);
-		if (!ast) return this.data;
-		return this.data.filter((item) => this.matchesAST(ast, item));
+		const { ast, astConditions } = super._parse(query);
+
+		const sortConditions = astConditions.filter(
+			(cond) => (cond.key === "asc" || cond.key === "desc") && typeof cond.value === "string"
+		) as SortCondition[];
+
+		return this.data
+			.filter((item) => ast && this.matchesAST(ast, item))
+			.toSorted((a, b) => {
+				for (const cond of sortConditions) {
+					const av = a[cond.value];
+					const bv = b[cond.value];
+					const result = cond.key === "asc" ? sorter(av, bv) : sorter(bv, av);
+					if (result !== 0) return result;
+				}
+				return 0;
+			});
 	}
 }

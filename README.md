@@ -229,7 +229,7 @@ export interface ParseResult {
 
 ## The `JSONSearchParser` Class
 
-`JSONSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a filter method that filters an array of JSON data using a search query.
+`JSONSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a filter method that filters and sosrts an array of JSON data using a search query.
 
 ```ts
 import { JSONSearchParser } from "@sillvva/search/json";
@@ -248,6 +248,13 @@ const books: Book[] = [
 const parser = new JSONSearchParser(books, { validKeys: ["title", "author"], defaultKey: "title" });
 const result = parser.filter("author:tolkien -hobbit");
 // result: [{ title: "The Lord of the Rings", author: "Tolkien" }]
+
+const result = parser.filter("asc:author asc:title");
+// result: [
+//   { title: "1984", author: "Orwell" },
+//   { title: "The Hobbit", author: "Tolkien" },
+//   { title: "The Lord of the Rings", author: "Tolkien" }
+// ]
 ```
 
 ## The `DrizzleSearchParser` Class

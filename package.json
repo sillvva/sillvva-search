@@ -1,6 +1,6 @@
 {
 	"name": "@sillvva/search",
-	"version": "0.6.1",
+	"version": "0.6.2",
 	"description": "A parser and analyzer for advanced search queries, supporting tokenization, abstract syntax tree generation, and condition extraction.",
 	"keywords": [
 		"search",
@@ -67,5 +67,8 @@
 		"typescript": "^5.8.3"
 	},
 	"license": "MIT",
-	"packageManager": "pnpm@10.11.0"
+	"packageManager": "pnpm@10.11.0",
+	"dependencies": {
+		"@sillvva/utils": "jsr:^0.5.0"
+	}
 }
