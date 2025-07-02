@@ -66,9 +66,9 @@
 		"tsup": "^8.5.0",
 		"typescript": "^5.8.3"
 	},
-	"license": "MIT",
-	"packageManager": "pnpm@10.11.0",
 	"dependencies": {
 		"@sillvva/utils": "jsr:^0.5.0"
-	}
+	},
+	"license": "MIT",
+	"packageManager": "pnpm@10.11.0"
 }
