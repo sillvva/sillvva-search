@@ -66,9 +66,9 @@ console.log(result.astConditions);
 /**
  * Tokens
  * [
- *   { type: 'keyword', key: 'author', value: 'Tolkien' },
- *   { type: 'negation' },
- *   { type: 'keyword_phrase', key: 'title', value: 'The Hobbit' }
+ *   { type: 'keyword', key: 'author', value: 'Tolkien', position: 0 },
+ *   { type: 'negation', position: 15 },
+ *   { type: 'keyword_phrase', key: 'title', value: 'The Hobbit', position: 16 }
  * ]
  */
 
@@ -77,16 +77,16 @@ console.log(result.astConditions);
  * {
  *   type: 'binary',
  *   operator: 'AND',
- *   left: { type: 'condition', token: 'keyword', key: 'author', value: 'Tolkien' },
- *   right: { type: 'condition', token: 'keyword_phrase', key: 'title', value: 'The Hobbit', negated: true }
+ *   left: { type: 'condition', token: 'keyword', key: 'author', value: 'Tolkien', position: 0 },
+ *   right: { type: 'condition', token: 'keyword_phrase', key: 'title', value: 'The Hobbit', negated: true, position: 16 }
  * }
  */
 
 /**
  * AST Conditions
  * [
- *   { key: 'author', value: 'Tolkien', isNegated: false, isRegex: false, isNumeric: false, isDate: false },
- *   { key: 'title', value: 'The Hobbit', isNegated: true, isRegex: false, isNumeric: false, isDate: false }
+ *   { key: 'author', value: 'Tolkien', position: 0, isNegated: false, isRegex: false, isNumeric: false, isDate: false },
+ *   { key: 'title', value: 'The Hobbit', position: 16, isNegated: true, isRegex: false, isNumeric: false, isDate: false }
  * ]
  */
 ```
