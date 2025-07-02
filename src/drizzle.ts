@@ -1,10 +1,26 @@
 import type { ExtractTablesWithRelations, Relations, RelationsFilter } from "drizzle-orm";
-import { NumericOperator, ParseResult, QueryParser, QueryParserOptions, type ASTCondition, type ASTNode } from "./index";
+import { QueryParser, type ASTCondition, type ASTNode, type NumericOperator, type ParseResult, type QueryParserOptions } from "./index";
 
 export type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
 
-export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>> extends ParseResult {
+export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>> extends Omit<ParseResult, "astConditions"> {
+	/**
+	 * The Drizzle-compatible filter object.
+	 */
 	where: TFilter | undefined;
+	/**
+	 * Conditions that were included and excluded from the Drizzle-compatible filter object.
+	 */
+	conditions: {
+		/**
+		 * Conditions that were included in the Drizzle-compatible filter object.
+		 */
+		included: ASTCondition[];
+		/**
+		 * Conditions that were excluded from the Drizzle-compatible filter object.
+		 */
+		excluded: ASTCondition[];
+	};
 }
 
 const operatorMap = new Map<NumericOperator, DrizzleOperator>([
@@ -33,24 +49,28 @@ export interface ParseDateOptions {
  * // Example Drizzle schema and relations (pseudo-code)
  * import { relations } from "./schema";
  *
+ * const validKeys = ["name", "age"] as const;
+ * const defaultKey = "name" as const satisfies (typeof validKeys)[number];
+ *
  * // Instantiate the parser
  * const parser = new DrizzleSearchParser<typeof relations, "user">((cond) => {
- *   if (cond.key === "name") {
+ * 	 const key = (ast.key?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
+ *   if (key === "name") {
  *     return { name: { ilike: `%${cond.value}%` } };
  *   }
- *   if (cond.key === "age") {
+ *   if (key === "age") {
  *     const op = parser.parseNumeric(cond);
  *     return op && { age: op };
  *   }
  *   return undefined;
- * }, { validKeys: ["name", "age"], defaultKey: "name" });
+ * }, { validKeys, defaultKey });
  *
  * // Parse a query string ✅
- * const { where } = parser.parseDrizzle("John age>=30");
+ * const { where } = parser.parse("John age>=30");
  * // where: { AND: [{ name: { ilike: "%John%" } }, { age: { gte: 30 } }] }
  *
  * // Invalid age ❌
- * const { where } = parser.parseDrizzle("John age:thirty");
+ * const { where } = parser.parse("John age:thirty");
  * // where: { AND: [{ name: { ilike: "%John%" } }] }
  *
  * // Usage
@@ -65,21 +85,30 @@ export class DrizzleSearchParser<
 	TRSchema extends ExtractTablesWithRelations<TRelations> = ExtractTablesWithRelations<TRelations>,
 	TFilter extends RelationsFilter<TRSchema[TableName], TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>
 > extends QueryParser {
-	constructor(private conditionBuilderFn: (ast: ASTCondition) => TFilter | undefined, options?: QueryParserOptions) {
+	/**
+	 * @param conditionBuilderFn - The function to build the Drizzle filter object from the AST condition.
+	 * @param options - The options for the parser. See {@link QueryParserOptions}
+	 */
+	constructor(private readonly conditionBuilderFn: (ast: ASTCondition) => TFilter | undefined, options?: QueryParserOptions) {
 		super(options);
 	}
 
 	// Build where clause object from Abstract Syntax Tree
-	private buildWhereClause(ast: ASTNode | null, parentNegated = false): TFilter | undefined {
+	private buildWhereClause(
+		ast: ASTNode | null,
+		parentNegated = false,
+		included: ASTCondition[] = [],
+		excluded: ASTCondition[] = []
+	): TFilter | undefined {
 		if (!ast) return;
 
 		const isNegated = parentNegated || ast.negated === true;
 
-		const buildClause = (node: ASTNode) => {
+		const buildClause = (node: ASTNode): TFilter | undefined => {
 			switch (node.type) {
-				case "binary":
-					const leftClause = this.buildWhereClause(node.left, isNegated);
-					const rightClause = this.buildWhereClause(node.right, isNegated);
+				case "binary": {
+					const leftClause = this.buildWhereClause(node.left, isNegated, included, excluded);
+					const rightClause = this.buildWhereClause(node.right, isNegated, included, excluded);
 
 					if (!leftClause || !rightClause) {
 						if (leftClause) return leftClause;
@@ -92,9 +121,9 @@ export class DrizzleSearchParser<
 					const leftArray = Array.isArray(left) ? left : [leftClause];
 					const rightArray = Array.isArray(right) ? right : [rightClause];
 					return { [node.operator]: [...leftArray, ...rightArray] } as TFilter;
-
-				case "condition":
-					return this.conditionBuilderFn({
+				}
+				case "condition": {
+					const cond: ASTCondition = {
 						key: node.key,
 						value: node.value,
 						isRegex: node.token.includes("regex"),
@@ -102,7 +131,12 @@ export class DrizzleSearchParser<
 						isNumeric: node.token === "keyword_numeric",
 						isDate: node.token === "keyword_date",
 						operator: node.operator
-					});
+					};
+					const filter = this.conditionBuilderFn(cond);
+					if (filter) included.push(cond);
+					else excluded.push(cond);
+					return filter;
+				}
 			}
 		};
 
@@ -161,14 +195,24 @@ export class DrizzleSearchParser<
 	/**
 	 * Parse a search query into a Drizzle filter object.
 	 * @param query - The search query string.
-	 * @returns The parsed search query.
+	 * @returns The parsed search query. See {@link DrizzleParseResult} for the return type.
 	 */
-	parseDrizzle(query: string): DrizzleParseResult<TFilter> {
-		const result = this.parse(query);
-		const where = this.buildWhereClause(result.ast);
+	parse(query: string): DrizzleParseResult<TFilter> {
+		const { ast, tokens, metadata } = super.parse(query);
+
+		const included: ASTCondition[] = [];
+		const excluded: ASTCondition[] = [];
+		const where = this.buildWhereClause(ast, false, included, excluded);
+
 		return {
-			...result,
-			where
+			tokens,
+			ast,
+			metadata,
+			where,
+			conditions: {
+				included,
+				excluded
+			}
 		};
 	}
 }

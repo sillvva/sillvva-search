@@ -271,9 +271,13 @@ The class has three methods:
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { relations } from "./schema";
 
+const validKeys = ["name", "age"] as const;
+const defaultKey = "name" as const satisfies (typeof validKeys)[number];
+
 // Instantiate the parser
 const parser = new DrizzleSearchParser<typeof relations, "user">(
 	(cond) => {
+		const key = (ast.key?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
 		if (cond.key === "name") {
 			return { name: { ilike: `%${cond.value}%` } };
 		}
@@ -283,15 +287,15 @@ const parser = new DrizzleSearchParser<typeof relations, "user">(
 		}
 		return undefined;
 	},
-	{ validKeys: ["name", "age"] }
+	{ validKeys, defaultKey }
 );
 
 // Parse a query string ✅
-const { where } = parser.parseDrizzle("name:John AND age>=30");
+const { where } = parser.parse("name:John AND age>=30");
 // where: { AND: [{ name: { ilike: "%John%" } }, { age: { gte: 30 } }] }
 
 // Invalid age ❌
-const { where } = parser.parseDrizzle("name:John age:thirty");
+const { where } = parser.parse("name:John age:thirty");
 // where: { AND: [{ name: { ilike: "%John%" } }] }
 
 // Usage

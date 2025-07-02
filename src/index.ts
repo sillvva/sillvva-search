@@ -112,24 +112,63 @@ export interface QueryParserOptions {
 }
 
 export interface ParseError {
+	/**
+	 * The type of error that occurred.
+	 */
 	type: "syntax" | "invalid_key";
+	/**
+	 * The message describing the error.
+	 */
 	message: string;
+	/**
+	 * The position in the query string where the error occurred.
+	 */
 	position: number;
+	/**
+	 * The key that was invalid, if applicable.
+	 */
 	key?: string;
+	/**
+	 * The value that was invalid, if applicable.
+	 */
 	value?: string;
 }
 
 export interface ParseMetadata {
+	/**
+	 * The original query string that was parsed.
+	 */
 	originalQuery: string;
+	/**
+	 * The time it took to parse the query.
+	 */
 	parseTime: number;
+	/**
+	 * Whether the query had any errors.
+	 */
 	hasErrors: boolean;
+	/**
+	 * The errors that occurred during the parse operation.
+	 */
 	errors: ParseError[];
 }
 
 export interface ParseResult {
+	/**
+	 * The tokens that were parsed from the query.
+	 */
 	tokens: Token[];
+	/**
+	 * The Abstract Syntax Tree (AST) of the query.
+	 */
 	ast: ASTNode | null;
-	astConditions: ASTCondition[];
+	/**
+	 * The conditions that were extracted from the AST.
+	 */
+	astConditions?: ASTCondition[];
+	/**
+	 * Metadata about the parse operation.
+	 */
 	metadata: ParseMetadata;
 }
 
