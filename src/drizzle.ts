@@ -23,17 +23,17 @@ export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>, T
 	 */
 	conditions: {
 		/**
-		 * Conditions that were included in the Drizzle-compatible filter object.
+		 * Conditions that were included in the Drizzle-compatible where object.
 		 */
 		filtered: ASTCondition[];
 		/**
-		 * Conditions that were excluded from the Drizzle-compatible filter object.
-		 */
-		excluded: ASTCondition[];
-		/**
-		 * Conditions that were used to sort the results.
+		 * Conditions that were included in the Drizzle-compatible orderBy object.
 		 */
 		sort: SortCondition[];
+		/**
+		 * Conditions that were excluded from the Drizzle-compatible where and orderBy objects.
+		 */
+		excluded: ASTCondition[];
 	};
 }
 
@@ -283,8 +283,8 @@ export class DrizzleSearchParser<
 			orderBy,
 			conditions: {
 				filtered,
-				excluded,
-				sort
+				sort,
+				excluded
 			}
 		};
 	}

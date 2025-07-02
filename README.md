@@ -34,6 +34,7 @@ You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on
       - [`ParseError`, `ParseMetadata`, and `ParseResult`](#parseerror-parsemetadata-and-parseresult)
   - [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
   - [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
+    - [`DrizzleParseResult`](#drizzleparseresult)
 
 # Installation
 
@@ -261,14 +262,14 @@ The class requires two type parameters:
 The constructor takes an options object with four properties:
 
 - Required: `filterFn` parses individual `ASTCondition` objects into Drizzle-compatible filter objects. By providing relations to the class, the return statement will provide autocomplete as if you were building a `findFirst` or `findMany` where object directly. Returning `undefined` will remove the condition from the final where object.
-- Optional: `orderFn` parses `ASTCondition` objects where the key is either `asc` or `desc` into Drizzle-compatible `orderBy` objects and merges them together.
+- Optional: `orderFn` parses [`SortCondition`](#drizzleparseresult) objects into Drizzle-compatible `orderBy` objects and merges them together.
 - Optional: `validKeys` allows you to specify which keys are permitted and all other keys given in the query will be ignored. If not provided, all keys in the query will be passed to the parser function.
 - Optional: `defaultKey` allows you to define a default key for "word", "phrase", and "regex" tokens as defined in the [syntax reference](#syntax-reference). If not provided, the key for the `ConditionNode` will be `undefined`.
 
 The class has three methods:
 
 - The `parseNumeric` and `parseDate` method parses "keyword_numeric" and "keyword_date" conditions and operator to the Drizzle-compatible equivalent.
-- The `parseDrizzle` method returns the `tokens`, Abstract Syntax Tree (`ast`), the AST conditions (`astConditions`), and the Drizzle-compatible `where` object.
+- The `parse` method returns the [`DrizzleParseResult`](#drizzleparseresult) object detailed below.
 
 ```ts
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
@@ -320,4 +321,44 @@ const { where, orderBy } = parser.parse("name:John age:thirty");
 
 // Usage
 const users = await db.query.user.findMany({ where, orderBy });
+```
+
+### `DrizzleParseResult`
+
+The `DrizzleParseResult` interface result extends the [`ParseResult`](#parseerror-parsemetadata-and-parseresult) interface including the tokens, Abstract Syntax Tree (AST), and metadata. In addition to the `where` and `orderBy` objects, the `parse` method also returns the conditions used to construct those objects as well as any remaining conditions that were not included in either. The `excluded` conditions can be used for further filtering and sorting after the db results are fetched.
+
+```ts
+export interface SortCondition {
+	dir: "asc" | "desc";
+	key: string;
+}
+
+export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>, TOrder extends RelationsOrder<any>>
+	extends Omit<ParseResult, "astConditions"> {
+	/**
+	 * The Drizzle-compatible where object.
+	 */
+	where: TFilter | undefined;
+	/**
+	 * The Drizzle-compatible orderBy object.
+	 */
+	orderBy: TOrder | undefined;
+	/**
+	 * Conditions that were included and excluded from the Drizzle-compatible where and orderBy objects.
+	 */
+	conditions: {
+		/**
+		 * Conditions that were included in the Drizzle-compatible where object.
+		 */
+		filtered: ASTCondition[];
+		/**
+		 * Conditions that were included in the Drizzle-compatible orderBy object.
+		 */
+		sort: SortCondition[];
+		/**
+		 * Conditions that were excluded from the Drizzle-compatible where and orderBy objects.
+		 */
+		excluded: ASTCondition[];
+	};
+}
 ```
