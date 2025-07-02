@@ -240,7 +240,7 @@ export class DrizzleSearchParser<
 	 * @returns The parsed search query. See {@link DrizzleParseResult} for the return type.
 	 */
 	parse(query: string): DrizzleParseResult<TFilter, TOrder> {
-		const { ast, tokens, metadata } = super.parse(query);
+		const { ast, tokens, metadata } = super._parse(query);
 
 		const filtered: ASTCondition[] = [];
 		const excluded: ASTCondition[] = [];
@@ -248,7 +248,7 @@ export class DrizzleSearchParser<
 
 		const sort: SortCondition[] = [];
 		const orderBy =
-			this.options.orderFn && excluded && excluded.filter((cond) => cond.key === "asc" || cond.key === "desc").length > 0
+			this.options.orderFn && excluded.filter((cond) => cond.key === "asc" || cond.key === "desc").length > 0
 				? excluded.reduce((acc, cond) => {
 						if (cond.key === "asc" || cond.key === "desc") {
 							const order = this.options.orderFn?.(cond as SortCondition);

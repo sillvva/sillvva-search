@@ -3,21 +3,21 @@ import { QueryParser } from "./index";
 describe("QueryParser", () => {
 	it("parses simple word queries", () => {
 		const parser = new QueryParser();
-		const result = parser["parse"]("hello");
+		const result = parser["_parse"]("hello");
 		expect(result.tokens).toEqual([{ type: "word", value: "hello", position: 0 }]);
 		expect(result.ast).toEqual({ type: "condition", token: "word", value: "hello", position: 0 });
 	});
 
 	it("parses phrase queries", () => {
 		const parser = new QueryParser();
-		const result = parser["parse"]('"hello world"');
+		const result = parser["_parse"]('"hello world"');
 		expect(result.tokens).toEqual([{ type: "phrase", value: "hello world", position: 0 }]);
 		expect(result.ast).toEqual({ type: "condition", token: "phrase", value: "hello world", position: 0 });
 	});
 
 	it("parses field-specific queries", () => {
 		const parser = new QueryParser({ validKeys: ["author", "title"] });
-		const result = parser["parse"](`author:Tolkien title:"The Hobbit"`);
+		const result = parser["_parse"](`author:Tolkien title:"The Hobbit"`);
 		expect(result.tokens).toEqual([
 			{ type: "keyword", key: "author", value: "Tolkien", position: 0 },
 			{ type: "keyword_phrase", key: "title", value: "The Hobbit", position: 15 }
@@ -32,7 +32,7 @@ describe("QueryParser", () => {
 
 	it("parses exclusions (negation)", () => {
 		const parser = new QueryParser();
-		const result = parser["parse"]("-hello");
+		const result = parser["_parse"]("-hello");
 		expect(result.tokens).toEqual([
 			{ type: "negation", position: 0 },
 			{ type: "word", value: "hello", position: 1 }
@@ -42,7 +42,7 @@ describe("QueryParser", () => {
 
 	it("parses logical operators AND/OR", () => {
 		const parser = new QueryParser();
-		const result = parser["parse"]("foo AND bar OR baz");
+		const result = parser["_parse"]("foo AND bar OR baz");
 		expect(result.tokens).toEqual([
 			{ type: "word", value: "foo", position: 0 },
 			{ type: "operator", value: "AND", position: 4 },
@@ -65,7 +65,7 @@ describe("QueryParser", () => {
 
 	it("parses grouping with parentheses", () => {
 		const parser = new QueryParser();
-		const result = parser["parse"]("(foo OR bar) AND baz");
+		const result = parser["_parse"]("(foo OR bar) AND baz");
 		expect(result.tokens).toMatchObject([
 			{ type: "open_paren", negated: false, position: 0 },
 			{ type: "word", value: "foo", position: 1 },
@@ -90,7 +90,7 @@ describe("QueryParser", () => {
 
 	it("parses numeric operators", () => {
 		const parser = new QueryParser({ validKeys: ["age"] });
-		const result = parser["parse"]("age<20 OR age=25 OR age>30");
+		const result = parser["_parse"]("age<20 OR age=25 OR age>30");
 		expect(result.tokens).toEqual([
 			{ type: "keyword_numeric", key: "age", operator: "<", value: 20, position: 0 },
 			{ type: "operator", value: "OR", position: 7 },
@@ -115,7 +115,7 @@ describe("QueryParser", () => {
 		const parser = new QueryParser({ validKeys: ["created"] });
 
 		// Full Date
-		let result = parser["parse"]("created<2025-05-05 OR created=2025-05-10 OR created>2025-05-15");
+		let result = parser["_parse"]("created<2025-05-05 OR created=2025-05-10 OR created>2025-05-15");
 		expect(result.tokens).toEqual([
 			{ type: "keyword_date", key: "created", operator: "<", value: new Date("2025-05-05T00:00:00.000Z"), position: 0 },
 			{ type: "operator", value: "OR", position: 19 },
@@ -172,7 +172,7 @@ describe("QueryParser", () => {
 		});
 
 		// Date with time
-		result = parser["parse"]("created=2025-05-05 12:00");
+		result = parser["_parse"]("created=2025-05-05 12:00");
 		expect(result.tokens).toEqual([{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: "=", position: 0 }]);
 		expect(result.ast).toEqual({
 			type: "condition",
@@ -184,7 +184,7 @@ describe("QueryParser", () => {
 		});
 
 		// Month
-		result = parser["parse"]("created<2025-05");
+		result = parser["_parse"]("created<2025-05");
 		expect(result.tokens).toEqual([
 			{
 				type: "keyword_date",
@@ -203,7 +203,7 @@ describe("QueryParser", () => {
 			position: 0
 		});
 
-		result = parser["parse"]("created=2025-05");
+		result = parser["_parse"]("created=2025-05");
 		expect(result.tokens).toEqual([
 			{ type: "open_paren", position: 0 },
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=", position: 0 },
@@ -218,7 +218,7 @@ describe("QueryParser", () => {
 		});
 
 		// Year
-		result = parser["parse"]("created<2025");
+		result = parser["_parse"]("created<2025");
 		expect(result.tokens).toEqual([
 			{
 				type: "keyword_date",
@@ -237,7 +237,7 @@ describe("QueryParser", () => {
 			position: 0
 		});
 
-		result = parser["parse"]("created=2025");
+		result = parser["_parse"]("created=2025");
 		expect(result.tokens).toEqual([
 			{ type: "open_paren", position: 0 },
 			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 0 },
@@ -255,7 +255,7 @@ describe("QueryParser", () => {
 	it("parses date range queries", () => {
 		// Full Date
 		const parser = new QueryParser({ validKeys: ["created"] });
-		let result = parser["parse"]("created:2025-05-05..2025-05-10");
+		let result = parser["_parse"]("created:2025-05-05..2025-05-10");
 		expect(result.tokens).toEqual([
 			{ type: "open_paren", position: 0 },
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=", position: 0 },
@@ -270,7 +270,7 @@ describe("QueryParser", () => {
 		});
 
 		// Date with time
-		result = parser["parse"]("created:2025-05-05 12:00..2025-05-10 12:00");
+		result = parser["_parse"]("created:2025-05-05 12:00..2025-05-10 12:00");
 		expect(result.tokens).toEqual([
 			{ type: "open_paren", position: 0 },
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=", position: 0 },
@@ -285,7 +285,7 @@ describe("QueryParser", () => {
 		});
 
 		// Month
-		result = parser["parse"]("created:2025-05..2025-07");
+		result = parser["_parse"]("created:2025-05..2025-07");
 		expect(result.tokens).toEqual([
 			{ type: "open_paren", position: 0 },
 			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=", position: 0 },
@@ -300,7 +300,7 @@ describe("QueryParser", () => {
 		});
 
 		// Year
-		result = parser["parse"]("created:2025..2026");
+		result = parser["_parse"]("created:2025..2026");
 		expect(result.tokens).toEqual([
 			{ type: "open_paren", position: 0 },
 			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 0 },
@@ -315,7 +315,7 @@ describe("QueryParser", () => {
 		});
 
 		// Negated date range
-		result = parser["parse"]("-created=2025..2026");
+		result = parser["_parse"]("-created=2025..2026");
 		expect(result.tokens).toEqual([
 			{ type: "open_paren", negated: true, position: 1 },
 			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 1 },
@@ -333,7 +333,7 @@ describe("QueryParser", () => {
 
 	it("parses numeric range queries", () => {
 		const parser = new QueryParser({ validKeys: ["age"] });
-		const result = parser["parse"]("age:10..20");
+		const result = parser["_parse"]("age:10..20");
 		expect(result.tokens).toEqual([
 			{ type: "keyword_numeric", key: "age", operator: ">=", value: 10, position: 0 },
 			{ type: "keyword_numeric", key: "age", operator: "<=", value: 20, position: 0 }
@@ -350,7 +350,7 @@ describe("QueryParser", () => {
 		const parser = new QueryParser({ validKeys: ["author"] });
 
 		// Field-specific regex
-		let result = parser["parse"]("author:/Tolk.*/");
+		let result = parser["_parse"]("author:/Tolk.*/");
 		expect(result.tokens).toEqual([{ type: "keyword_regex", key: "author", value: "Tolk.*", position: 0 }]);
 		expect(result.ast).toEqual({
 			type: "condition",
@@ -361,14 +361,14 @@ describe("QueryParser", () => {
 		});
 
 		// Standalone regex
-		result = parser["parse"]("/Tolk.*/");
+		result = parser["_parse"]("/Tolk.*/");
 		expect(result.tokens).toEqual([{ type: "regex", value: "Tolk.*", position: 0 }]);
 		expect(result.ast).toEqual({ type: "condition", token: "regex", value: "Tolk.*", position: 0 });
 	});
 
 	it("parses defaultKey for word/phrase", () => {
 		const parser = new QueryParser({ defaultKey: "title" });
-		const result = parser["parse"]('Hobbit "The Lord"');
+		const result = parser["_parse"]('Hobbit "The Lord"');
 		expect(result.tokens).toEqual([
 			{ type: "keyword", key: "title", value: "Hobbit", position: 0 },
 			{ type: "keyword_phrase", key: "title", value: "The Lord", position: 7 }
@@ -383,21 +383,21 @@ describe("QueryParser", () => {
 
 	it("returns errors for invalid syntax", () => {
 		const parser = new QueryParser();
-		const result = parser["parse"]("hello~world");
+		const result = parser["_parse"]("hello~world");
 		expect(result.metadata.hasErrors).toBe(true);
 		expect(result.metadata.errors).toEqual([{ type: "syntax", message: "Unexpected syntax", position: 5, value: "~world" }]);
 	});
 
 	it("returns errors for invalid keys", () => {
 		const parser = new QueryParser({ validKeys: ["title"] });
-		const result = parser["parse"]("author:Tolkien");
+		const result = parser["_parse"]("author:Tolkien");
 		expect(result.metadata.hasErrors).toBe(true);
 		expect(result.metadata.errors).toEqual([{ type: "invalid_key", message: "Invalid key: author", position: 0, key: "author", value: "Tolkien" }]);
 	});
 
 	it("handles empty queries", () => {
 		const parser = new QueryParser();
-		const result = parser["parse"]("");
+		const result = parser["_parse"]("");
 		expect(result.tokens).toEqual([]);
 		expect(result.ast).toBeNull();
 		expect(result.astConditions).toEqual([]);
@@ -405,7 +405,7 @@ describe("QueryParser", () => {
 
 	it("handles whitespace-only queries", () => {
 		const parser = new QueryParser();
-		const result = parser["parse"]("   ");
+		const result = parser["_parse"]("   ");
 		expect(result.tokens).toEqual([]);
 		expect(result.ast).toBeNull();
 		expect(result.astConditions).toEqual([]);
@@ -414,7 +414,7 @@ describe("QueryParser", () => {
 	it("handles deeply nested parentheses", () => {
 		const parser = new QueryParser();
 		const query = "((foo or bar) and baz)";
-		let result = parser["parse"](query);
+		let result = parser["_parse"](query);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
@@ -427,7 +427,7 @@ describe("QueryParser", () => {
 			right: { type: "condition", token: "word", value: "baz", position: 18 }
 		});
 
-		result = parser["parse"](`(foo and (bar or baz))`);
+		result = parser["_parse"](`(foo and (bar or baz))`);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",

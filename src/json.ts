@@ -106,7 +106,7 @@ export class JSONSearchParser<T extends Record<any, any>> extends QueryParser {
 	 * @returns The filtered array of JSON objects matching the query.
 	 */
 	filter(query: string): T[] {
-		const { ast } = super.parse(query);
+		const { ast } = super._parse(query);
 		if (!ast) return this.data;
 		return this.data.filter((item) => this.matchesAST(ast, item));
 	}

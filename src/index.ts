@@ -168,7 +168,7 @@ export interface ParseResult {
 	/**
 	 * The conditions that were extracted from the AST.
 	 */
-	astConditions?: ASTCondition[];
+	astConditions: ASTCondition[];
 	/**
 	 * Metadata about the parse operation.
 	 */
@@ -698,7 +698,7 @@ export class QueryParser {
 	 * @param query The search query string to parse.
 	 * @returns An object containing the tokens, AST, and extracted conditions.
 	 */
-	protected parse(query: string): ParseResult {
+	protected _parse(query: string): ParseResult {
 		const start = performance.now();
 		query = normalizeQuery(query);
 		const { tokens, errors } = this.tokenize(query);
