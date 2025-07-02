@@ -282,25 +282,29 @@ const parser = new DrizzleSearchParser<typeof relations, "user">({
 	validKeys,
 	defaultKey,
 	filterFn: (cond) => {
-		const key = (ast.key?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
-		if (cond.key === "name") {
-			return { name: { ilike: `%${cond.value}%` } };
+		const key = (cond.key?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
+		switch(key) {
+			case "name":
+				return { name: { ilike: `%${cond.value}%` } };
+
+			case "age":
+				const op = parser.parseNumeric(cond);
+				return op && { [key]: op };
+
+			default:
+				return;
 		}
-		if (cond.key === "age") {
-			const op = parser.parseNumeric(cond);
-			return op && { age: op };
-		}
-		return;
 	}
 	orderFn: (cond) => {
-		const key = (String(ast.value)?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
+		const key = (String(cond.value)?.toLowerCase() || defaultKey) as (typeof validKeys)[number];
 		switch(key) {
 			case "name":
 			case "age":
-				return { [key]: ast.key === "asc" : "asc" : "desc" };
-		}
+				return { [key]: cond.key === "asc" : "asc" : "desc" };
 
-		return;
+			default:
+				return;
+		}
 	}
 });
 
