@@ -4,48 +4,51 @@ describe("QueryParser", () => {
 	it("parses simple word queries", () => {
 		const parser = new QueryParser();
 		const result = parser["parse"]("hello");
-		expect(result.tokens).toEqual([{ type: "word", value: "hello" }]);
-		expect(result.ast).toEqual({ type: "condition", token: "word", value: "hello" });
+		expect(result.tokens).toEqual([{ type: "word", value: "hello", position: 0 }]);
+		expect(result.ast).toEqual({ type: "condition", token: "word", value: "hello", position: 0 });
 	});
 
 	it("parses phrase queries", () => {
 		const parser = new QueryParser();
 		const result = parser["parse"]('"hello world"');
-		expect(result.tokens).toEqual([{ type: "phrase", value: "hello world" }]);
-		expect(result.ast).toEqual({ type: "condition", token: "phrase", value: "hello world" });
+		expect(result.tokens).toEqual([{ type: "phrase", value: "hello world", position: 0 }]);
+		expect(result.ast).toEqual({ type: "condition", token: "phrase", value: "hello world", position: 0 });
 	});
 
 	it("parses field-specific queries", () => {
 		const parser = new QueryParser({ validKeys: ["author", "title"] });
 		const result = parser["parse"](`author:Tolkien title:"The Hobbit"`);
 		expect(result.tokens).toEqual([
-			{ type: "keyword", key: "author", value: "Tolkien" },
-			{ type: "keyword_phrase", key: "title", value: "The Hobbit" }
+			{ type: "keyword", key: "author", value: "Tolkien", position: 0 },
+			{ type: "keyword_phrase", key: "title", value: "The Hobbit", position: 15 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword", key: "author", value: "Tolkien" },
-			right: { type: "condition", token: "keyword_phrase", key: "title", value: "The Hobbit" }
+			left: { type: "condition", token: "keyword", key: "author", value: "Tolkien", position: 0 },
+			right: { type: "condition", token: "keyword_phrase", key: "title", value: "The Hobbit", position: 15 }
 		});
 	});
 
 	it("parses exclusions (negation)", () => {
 		const parser = new QueryParser();
 		const result = parser["parse"]("-hello");
-		expect(result.tokens).toEqual([{ type: "negation" }, { type: "word", value: "hello" }]);
-		expect(result.ast).toEqual({ type: "condition", token: "word", value: "hello", negated: true });
+		expect(result.tokens).toEqual([
+			{ type: "negation", position: 0 },
+			{ type: "word", value: "hello", position: 1 }
+		]);
+		expect(result.ast).toEqual({ type: "condition", token: "word", value: "hello", negated: true, position: 1 });
 	});
 
 	it("parses logical operators AND/OR", () => {
 		const parser = new QueryParser();
 		const result = parser["parse"]("foo AND bar OR baz");
 		expect(result.tokens).toEqual([
-			{ type: "word", value: "foo" },
-			{ type: "operator", value: "AND" },
-			{ type: "word", value: "bar" },
-			{ type: "operator", value: "OR" },
-			{ type: "word", value: "baz" }
+			{ type: "word", value: "foo", position: 0 },
+			{ type: "operator", value: "AND", position: 4 },
+			{ type: "word", value: "bar", position: 8 },
+			{ type: "operator", value: "OR", position: 12 },
+			{ type: "word", value: "baz", position: 15 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
@@ -53,10 +56,10 @@ describe("QueryParser", () => {
 			left: {
 				type: "binary",
 				operator: "AND",
-				left: { type: "condition", token: "word", value: "foo" },
-				right: { type: "condition", token: "word", value: "bar" }
+				left: { type: "condition", token: "word", value: "foo", position: 0 },
+				right: { type: "condition", token: "word", value: "bar", position: 8 }
 			},
-			right: { type: "condition", token: "word", value: "baz" }
+			right: { type: "condition", token: "word", value: "baz", position: 15 }
 		});
 	});
 
@@ -64,13 +67,13 @@ describe("QueryParser", () => {
 		const parser = new QueryParser();
 		const result = parser["parse"]("(foo OR bar) AND baz");
 		expect(result.tokens).toMatchObject([
-			{ type: "open_paren" },
-			{ type: "word", value: "foo" },
-			{ type: "operator", value: "OR" },
-			{ type: "word", value: "bar" },
-			{ type: "close_paren" },
-			{ type: "operator", value: "AND" },
-			{ type: "word", value: "baz" }
+			{ type: "open_paren", negated: false, position: 0 },
+			{ type: "word", value: "foo", position: 1 },
+			{ type: "operator", value: "OR", position: 5 },
+			{ type: "word", value: "bar", position: 8 },
+			{ type: "close_paren", position: 11 },
+			{ type: "operator", value: "AND", position: 13 },
+			{ type: "word", value: "baz", position: 17 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
@@ -78,10 +81,10 @@ describe("QueryParser", () => {
 			left: {
 				type: "binary",
 				operator: "OR",
-				left: { type: "condition", token: "word", value: "foo" },
-				right: { type: "condition", token: "word", value: "bar" }
+				left: { type: "condition", token: "word", value: "foo", position: 1 },
+				right: { type: "condition", token: "word", value: "bar", position: 8 }
 			},
-			right: { type: "condition", token: "word", value: "baz" }
+			right: { type: "condition", token: "word", value: "baz", position: 17 }
 		});
 	});
 
@@ -89,11 +92,11 @@ describe("QueryParser", () => {
 		const parser = new QueryParser({ validKeys: ["age"] });
 		const result = parser["parse"]("age<20 OR age=25 OR age>30");
 		expect(result.tokens).toEqual([
-			{ type: "keyword_numeric", key: "age", operator: "<", value: 20 },
-			{ type: "operator", value: "OR" },
-			{ type: "keyword_numeric", key: "age", operator: "=", value: 25 },
-			{ type: "operator", value: "OR" },
-			{ type: "keyword_numeric", key: "age", operator: ">", value: 30 }
+			{ type: "keyword_numeric", key: "age", operator: "<", value: 20, position: 0 },
+			{ type: "operator", value: "OR", position: 7 },
+			{ type: "keyword_numeric", key: "age", operator: "=", value: 25, position: 10 },
+			{ type: "operator", value: "OR", position: 17 },
+			{ type: "keyword_numeric", key: "age", operator: ">", value: 30, position: 20 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
@@ -101,10 +104,10 @@ describe("QueryParser", () => {
 			left: {
 				type: "binary",
 				operator: "OR",
-				left: { type: "condition", token: "keyword_numeric", key: "age", operator: "<", value: 20 },
-				right: { type: "condition", token: "keyword_numeric", key: "age", operator: "=", value: 25 }
+				left: { type: "condition", token: "keyword_numeric", key: "age", operator: "<", value: 20, position: 0 },
+				right: { type: "condition", token: "keyword_numeric", key: "age", operator: "=", value: 25, position: 10 }
 			},
-			right: { type: "condition", token: "keyword_numeric", key: "age", operator: ">", value: 30 }
+			right: { type: "condition", token: "keyword_numeric", key: "age", operator: ">", value: 30, position: 20 }
 		});
 	});
 
@@ -114,14 +117,14 @@ describe("QueryParser", () => {
 		// Full Date
 		let result = parser["parse"]("created<2025-05-05 OR created=2025-05-10 OR created>2025-05-15");
 		expect(result.tokens).toEqual([
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-05"), operator: "<" },
-			{ type: "operator", value: "OR" },
-			{ type: "open_paren" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-10T00:00:00.000Z"), operator: ">=" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-10T23:59:59.999Z"), operator: "<=" },
-			{ type: "close_paren" },
-			{ type: "operator", value: "OR" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-15T23:59:59.999Z"), operator: ">" }
+			{ type: "keyword_date", key: "created", operator: "<", value: new Date("2025-05-05T00:00:00.000Z"), position: 0 },
+			{ type: "operator", value: "OR", position: 19 },
+			{ type: "open_paren", position: 22 },
+			{ type: "keyword_date", key: "created", operator: ">=", value: new Date("2025-05-10T00:00:00.000Z"), position: 22 },
+			{ type: "keyword_date", key: "created", operator: "<=", value: new Date("2025-05-10T23:59:59.999Z"), position: 22 },
+			{ type: "close_paren", position: 22 },
+			{ type: "operator", value: "OR", position: 41 },
+			{ type: "keyword_date", key: "created", operator: ">", value: new Date("2025-05-15T23:59:59.999Z"), position: 44 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
@@ -134,7 +137,8 @@ describe("QueryParser", () => {
 					token: "keyword_date",
 					key: "created",
 					value: new Date("2025-05-05"),
-					operator: "<"
+					operator: "<",
+					position: 0
 				},
 				right: {
 					type: "binary",
@@ -144,14 +148,16 @@ describe("QueryParser", () => {
 						token: "keyword_date",
 						key: "created",
 						value: new Date("2025-05-10T00:00:00.000Z"),
-						operator: ">="
+						operator: ">=",
+						position: 22
 					},
 					right: {
 						type: "condition",
 						token: "keyword_date",
 						key: "created",
 						value: new Date("2025-05-10T23:59:59.999Z"),
-						operator: "<="
+						operator: "<=",
+						position: 22
 					}
 				}
 			},
@@ -160,19 +166,21 @@ describe("QueryParser", () => {
 				token: "keyword_date",
 				key: "created",
 				value: new Date("2025-05-15T23:59:59.999Z"),
-				operator: ">"
+				operator: ">",
+				position: 44
 			}
 		});
 
 		// Date with time
 		result = parser["parse"]("created=2025-05-05 12:00");
-		expect(result.tokens).toEqual([{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: "=" }]);
+		expect(result.tokens).toEqual([{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: "=", position: 0 }]);
 		expect(result.ast).toEqual({
 			type: "condition",
 			token: "keyword_date",
 			key: "created",
 			value: new Date("2025-05-05 12:00"),
-			operator: "="
+			operator: "=",
+			position: 0
 		});
 
 		// Month
@@ -182,7 +190,8 @@ describe("QueryParser", () => {
 				type: "keyword_date",
 				key: "created",
 				value: new Date("2025-05"),
-				operator: "<"
+				operator: "<",
+				position: 0
 			}
 		]);
 		expect(result.ast).toEqual({
@@ -190,21 +199,22 @@ describe("QueryParser", () => {
 			token: "keyword_date",
 			key: "created",
 			value: new Date("2025-05"),
-			operator: "<"
+			operator: "<",
+			position: 0
 		});
 
 		result = parser["parse"]("created=2025-05");
 		expect(result.tokens).toEqual([
-			{ type: "open_paren" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-31T23:59:59.999Z"), operator: "<=" },
-			{ type: "close_paren" }
+			{ type: "open_paren", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-31T23:59:59.999Z"), operator: "<=", position: 0 },
+			{ type: "close_paren", position: 0 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
-			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-31T23:59:59.999Z"), operator: "<=" }
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=", position: 0 },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-31T23:59:59.999Z"), operator: "<=", position: 0 }
 		});
 
 		// Year
@@ -214,7 +224,8 @@ describe("QueryParser", () => {
 				type: "keyword_date",
 				key: "created",
 				value: new Date("2025"),
-				operator: "<"
+				operator: "<",
+				position: 0
 			}
 		]);
 		expect(result.ast).toEqual({
@@ -222,21 +233,22 @@ describe("QueryParser", () => {
 			token: "keyword_date",
 			key: "created",
 			value: new Date("2025"),
-			operator: "<"
+			operator: "<",
+			position: 0
 		});
 
 		result = parser["parse"]("created=2025");
 		expect(result.tokens).toEqual([
-			{ type: "open_paren" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-12-31T23:59:59.999Z"), operator: "<=" },
-			{ type: "close_paren" }
+			{ type: "open_paren", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-12-31T23:59:59.999Z"), operator: "<=", position: 0 },
+			{ type: "close_paren", position: 0 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
-			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-12-31T23:59:59.999Z"), operator: "<=" }
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 0 },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-12-31T23:59:59.999Z"), operator: "<=", position: 0 }
 		});
 	});
 
@@ -245,76 +257,76 @@ describe("QueryParser", () => {
 		const parser = new QueryParser({ validKeys: ["created"] });
 		let result = parser["parse"]("created:2025-05-05..2025-05-10");
 		expect(result.tokens).toEqual([
-			{ type: "open_paren" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-10T23:59:59.999Z"), operator: "<=" },
-			{ type: "close_paren" }
+			{ type: "open_paren", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-10T23:59:59.999Z"), operator: "<=", position: 0 },
+			{ type: "close_paren", position: 0 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=" },
-			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-10T23:59:59.999Z"), operator: "<=" }
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05T00:00:00.000Z"), operator: ">=", position: 0 },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-10T23:59:59.999Z"), operator: "<=", position: 0 }
 		});
 
 		// Date with time
 		result = parser["parse"]("created:2025-05-05 12:00..2025-05-10 12:00");
 		expect(result.tokens).toEqual([
-			{ type: "open_paren" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-10 12:00"), operator: "<=" },
-			{ type: "close_paren" }
+			{ type: "open_paren", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-10 12:00"), operator: "<=", position: 0 },
+			{ type: "close_paren", position: 0 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=" },
-			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-10 12:00"), operator: "<=" }
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-05 12:00"), operator: ">=", position: 0 },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-10 12:00"), operator: "<=", position: 0 }
 		});
 
 		// Month
 		result = parser["parse"]("created:2025-05..2025-07");
 		expect(result.tokens).toEqual([
-			{ type: "open_paren" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-07-31T23:59:59.999Z"), operator: "<=" },
-			{ type: "close_paren" }
+			{ type: "open_paren", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-07-31T23:59:59.999Z"), operator: "<=", position: 0 },
+			{ type: "close_paren", position: 0 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=" },
-			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-07-31T23:59:59.999Z"), operator: "<=" }
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-05-01T00:00:00.000Z"), operator: ">=", position: 0 },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-07-31T23:59:59.999Z"), operator: "<=", position: 0 }
 		});
 
 		// Year
 		result = parser["parse"]("created:2025..2026");
 		expect(result.tokens).toEqual([
-			{ type: "open_paren" },
-			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
-			{ type: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" },
-			{ type: "close_paren" }
+			{ type: "open_paren", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 0 },
+			{ type: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=", position: 0 },
+			{ type: "close_paren", position: 0 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
-			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" }
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 0 },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=", position: 0 }
 		});
 
 		// Negated date range
 		result = parser["parse"]("-created=2025..2026");
 		expect(result.tokens).toEqual([
-			{ type: "open_paren", negated: true },
-			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
-			{ type: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" },
-			{ type: "close_paren" }
+			{ type: "open_paren", negated: true, position: 1 },
+			{ type: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 1 },
+			{ type: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=", position: 1 },
+			{ type: "close_paren", position: 1 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=" },
-			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=" },
+			left: { type: "condition", token: "keyword_date", key: "created", value: new Date("2025-01-01T00:00:00.000Z"), operator: ">=", position: 1 },
+			right: { type: "condition", token: "keyword_date", key: "created", value: new Date("2026-12-31T23:59:59.999Z"), operator: "<=", position: 1 },
 			negated: true
 		});
 	});
@@ -323,14 +335,14 @@ describe("QueryParser", () => {
 		const parser = new QueryParser({ validKeys: ["age"] });
 		const result = parser["parse"]("age:10..20");
 		expect(result.tokens).toEqual([
-			{ type: "keyword_numeric", key: "age", operator: ">=", value: 10 },
-			{ type: "keyword_numeric", key: "age", operator: "<=", value: 20 }
+			{ type: "keyword_numeric", key: "age", operator: ">=", value: 10, position: 0 },
+			{ type: "keyword_numeric", key: "age", operator: "<=", value: 20, position: 0 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword_numeric", key: "age", operator: ">=", value: 10 },
-			right: { type: "condition", token: "keyword_numeric", key: "age", operator: "<=", value: 20 }
+			left: { type: "condition", token: "keyword_numeric", key: "age", operator: ">=", value: 10, position: 0 },
+			right: { type: "condition", token: "keyword_numeric", key: "age", operator: "<=", value: 20, position: 0 }
 		});
 	});
 
@@ -339,32 +351,33 @@ describe("QueryParser", () => {
 
 		// Field-specific regex
 		let result = parser["parse"]("author:/Tolk.*/");
-		expect(result.tokens).toEqual([{ type: "keyword_regex", key: "author", value: "Tolk.*" }]);
+		expect(result.tokens).toEqual([{ type: "keyword_regex", key: "author", value: "Tolk.*", position: 0 }]);
 		expect(result.ast).toEqual({
 			type: "condition",
 			token: "keyword_regex",
 			key: "author",
-			value: "Tolk.*"
+			value: "Tolk.*",
+			position: 0
 		});
 
 		// Standalone regex
 		result = parser["parse"]("/Tolk.*/");
-		expect(result.tokens).toEqual([{ type: "regex", value: "Tolk.*" }]);
-		expect(result.ast).toEqual({ type: "condition", token: "regex", value: "Tolk.*" });
+		expect(result.tokens).toEqual([{ type: "regex", value: "Tolk.*", position: 0 }]);
+		expect(result.ast).toEqual({ type: "condition", token: "regex", value: "Tolk.*", position: 0 });
 	});
 
 	it("parses defaultKey for word/phrase", () => {
 		const parser = new QueryParser({ defaultKey: "title" });
 		const result = parser["parse"]('Hobbit "The Lord"');
 		expect(result.tokens).toEqual([
-			{ type: "keyword", key: "title", value: "Hobbit" },
-			{ type: "keyword_phrase", key: "title", value: "The Lord" }
+			{ type: "keyword", key: "title", value: "Hobbit", position: 0 },
+			{ type: "keyword_phrase", key: "title", value: "The Lord", position: 7 }
 		]);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "keyword", key: "title", value: "Hobbit" },
-			right: { type: "condition", token: "keyword_phrase", key: "title", value: "The Lord" }
+			left: { type: "condition", token: "keyword", key: "title", value: "Hobbit", position: 0 },
+			right: { type: "condition", token: "keyword_phrase", key: "title", value: "The Lord", position: 7 }
 		});
 	});
 
@@ -408,22 +421,22 @@ describe("QueryParser", () => {
 			left: {
 				type: "binary",
 				operator: "OR",
-				left: { type: "condition", token: "word", value: "foo" },
-				right: { type: "condition", token: "word", value: "bar" }
+				left: { type: "condition", token: "word", value: "foo", position: 2 },
+				right: { type: "condition", token: "word", value: "bar", position: 9 }
 			},
-			right: { type: "condition", token: "word", value: "baz" }
+			right: { type: "condition", token: "word", value: "baz", position: 18 }
 		});
 
 		result = parser["parse"](`(foo and (bar or baz))`);
 		expect(result.ast).toEqual({
 			type: "binary",
 			operator: "AND",
-			left: { type: "condition", token: "word", value: "foo" },
+			left: { type: "condition", token: "word", value: "foo", position: 1 },
 			right: {
 				type: "binary",
 				operator: "OR",
-				left: { type: "condition", token: "word", value: "bar" },
-				right: { type: "condition", token: "word", value: "baz" }
+				left: { type: "condition", token: "word", value: "bar", position: 10 },
+				right: { type: "condition", token: "word", value: "baz", position: 17 }
 			}
 		});
 	});
