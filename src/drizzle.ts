@@ -3,6 +3,11 @@ import { QueryParser, type ASTCondition, type ASTNode, type NumericOperator, typ
 
 export type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
 
+export interface SortCondition {
+	dir: "asc" | "desc";
+	key: string;
+}
+
 export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>, TOrder extends RelationsOrder<any>>
 	extends Omit<ParseResult, "astConditions"> {
 	/**
@@ -42,10 +47,6 @@ const operatorMap = new Map<NumericOperator, DrizzleOperator>([
 
 export interface ParseDateOptions {
 	dateFormat?: "date" | "unix";
-}
-
-export interface SortCondition extends ASTCondition {
-	key: "asc" | "desc";
 }
 
 /**
@@ -114,7 +115,7 @@ export class DrizzleSearchParser<
 	DrizzleParserOptions extends QueryParserOptions & {
 		filterFn: (ast: ASTCondition) => TFilter | undefined;
 		orderFn?: (ast: SortCondition) => TOrder | undefined;
-	} = QueryParserOptions & { filterFn: (ast: ASTCondition) => TFilter | undefined; orderFn?: (ast: ASTCondition) => TOrder | undefined }
+	} = QueryParserOptions & { filterFn: (ast: ASTCondition) => TFilter | undefined; orderFn?: (ast: SortCondition) => TOrder | undefined }
 > extends QueryParser {
 	/**
 	 * @param options - The options for the parser.
@@ -175,6 +176,12 @@ export class DrizzleSearchParser<
 						operator: node.operator,
 						position: node.position
 					};
+
+					if (node.key === "asc" || node.key === "desc") {
+						excluded.push(cond);
+						return;
+					}
+
 					const filter = this.options.filterFn(cond);
 					if (filter) filtered.push(cond);
 					else excluded.push(cond);
@@ -244,16 +251,23 @@ export class DrizzleSearchParser<
 		const { ast, tokens, metadata } = super._parse(query);
 
 		const filtered: ASTCondition[] = [];
-		const excluded: ASTCondition[] = [];
+		let excluded: ASTCondition[] = [];
 		const where = this.buildWhereClause(ast, false, filtered, excluded);
 
 		const sort: SortCondition[] = [];
 		const orderBy =
 			this.options.orderFn && excluded.filter((cond) => cond.key === "asc" || cond.key === "desc").length > 0
 				? excluded.reduce((acc, cond) => {
-						if (cond.key === "asc" || cond.key === "desc") {
-							const order = this.options.orderFn?.(cond as SortCondition);
-							if (order) sort.push(cond as SortCondition);
+						if ((cond.key === "asc" || cond.key === "desc") && typeof cond.value === "string") {
+							const sortCondition: SortCondition = {
+								dir: cond.key === "asc" ? "asc" : "desc",
+								key: cond.value
+							};
+							const order = this.options.orderFn?.(sortCondition);
+							if (order) {
+								sort.push(sortCondition);
+								excluded = excluded.filter((c) => c.key !== cond.key && c.value !== cond.value);
+							}
 							return order ? { ...acc, ...order } : acc;
 						}
 
@@ -268,8 +282,8 @@ export class DrizzleSearchParser<
 			where,
 			orderBy,
 			conditions: {
-				filtered: filtered,
-				excluded: excluded.filter((cond) => !sort.some((s) => s.key === cond.key && s.value === cond.value)),
+				filtered,
+				excluded,
 				sort
 			}
 		};
