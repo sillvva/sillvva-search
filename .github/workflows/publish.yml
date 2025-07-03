@@ -24,6 +24,13 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
+      - name: Set up npm auth
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "engine-strict=true" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish
         run: pnpm publish --access public --no-git-checks
         env:
