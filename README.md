@@ -18,7 +18,7 @@ While the package includes other classes, such as `JSONSearchParser` and `Drizzl
 
 ## Demo
 
-You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
+You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on [CodeSandbox](https://codesandbox.io/p/devbox/d4d36t?file=%2Flib%2Fsearch%2Fcharacter.ts).
 
 # Table of Contents
 
@@ -259,7 +259,7 @@ const result = parser.filter("asc:author asc:title");
 
 ## The `DrizzleSearchParser` Class
 
-`DrizzleSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the [v2 relational query builder](https://rqbv2.drizzle-orm-fe.pages.dev/docs/rqb-v2#select-filters). You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
+`DrizzleSearchParser` is a class that extends the [`QueryParser`](#the-queryparser-class) class and provides a parseDrizzle method that parses a search query into a Drizzle-compatible filter object for the [v2 relational query builder](https://rqbv2.drizzle-orm-fe.pages.dev/docs/rqb-v2#select-filters). You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/d4d36t?file=%2Flib%2Fsearch%2Fcharacter.ts).
 
 The class requires two type parameters:
 

@@ -55,7 +55,7 @@ export interface ParseDateOptions {
  * @typeParam TableName - The name of the table to search. See {@link QueryParserOptions}
  *
  * @example
- * You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/4894v5?file=%2Flib%2Fsearch%2Fcharacter.ts%3A63%2C9).
+ * You can see a demo of this on [CodeSandbox](https://codesandbox.io/p/devbox/d4d36t?file=%2Flib%2Fsearch%2Fcharacter.ts).
  *
  * ```ts
  * import { DrizzleSearchParser } from "@sillvva/search/drizzle";
