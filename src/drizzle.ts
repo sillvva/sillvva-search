@@ -121,7 +121,7 @@ export class DrizzleSearchParser<
 		 * The function to build the Drizzle order object from the {@linkcode SortCondition}.
 		 */
 		orderFn?: (ast: SortCondition) => TOrder | undefined;
-	} = QueryParserOptions & { filterFn: (ast: ASTCondition) => TFilter | undefined; orderFn?: (ast: SortCondition) => TOrder | undefined }
+	} = { filterFn: (ast: ASTCondition) => TFilter | undefined }
 > extends QueryParser {
 	/**
 	 * @param options {@linkcode DrizzleParserOptions} - The options for the parser.
