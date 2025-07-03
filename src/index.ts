@@ -175,16 +175,6 @@ export interface ParseResult {
 	metadata: ParseMetadata;
 }
 
-function normalizeQuery(str: string) {
-	return (
-		str
-			// Normalize multiple spaces to single space
-			.replace(/\s+/g, " ")
-			// Remove leading/trailing spaces
-			.trim()
-	);
-}
-
 /**
  * A parser and analyzer for advanced search queries. Supports tokenization and abstract syntax tree generation.
  *
@@ -693,6 +683,16 @@ export class QueryParser {
 		}
 	}
 
+	private normalizeQuery(str: string) {
+		return (
+			str
+				// Normalize multiple spaces to single space
+				.replace(/\s+/g, " ")
+				// Remove leading/trailing spaces
+				.trim()
+		);
+	}
+
 	/**
 	 * Parse a search query string into tokens, an Abstract Syntax Tree, and an array of conditions.
 	 * @param query The search query string to parse.
@@ -700,7 +700,7 @@ export class QueryParser {
 	 */
 	protected _parse(query: string): ParseResult {
 		const start = performance.now();
-		query = normalizeQuery(query);
+		query = this.normalizeQuery(query);
 		const { tokens, errors } = this.tokenize(query);
 		const ast = this.buildAST(tokens);
 		const astConditions = this.extractConditions(ast);

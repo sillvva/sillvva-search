@@ -113,14 +113,20 @@ export class DrizzleSearchParser<
 	TFilter extends RelationsFilter<TRSchema[TableName], TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>,
 	TOrder extends RelationsOrder<TRSchema[TableName]["columns"]> = RelationsOrder<TRSchema[TableName]["columns"]>,
 	DrizzleParserOptions extends QueryParserOptions & {
+		/**
+		 * The function to build the Drizzle filter object from the {@linkcode ASTCondition}.
+		 */
 		filterFn: (ast: ASTCondition) => TFilter | undefined;
+		/**
+		 * The function to build the Drizzle order object from the {@linkcode SortCondition}.
+		 */
 		orderFn?: (ast: SortCondition) => TOrder | undefined;
 	} = QueryParserOptions & { filterFn: (ast: ASTCondition) => TFilter | undefined; orderFn?: (ast: SortCondition) => TOrder | undefined }
 > extends QueryParser {
 	/**
-	 * @param options - The options for the parser.
-	 * @param options.filterFn - The function to build the Drizzle filter object from the AST condition.
-	 * @param options.orderFn - The function to build the Drizzle order object from the AST condition.
+	 * @param options {@linkcode DrizzleParserOptions} - The options for the parser.
+	 * @param options.filterFn - The function to build the Drizzle filter object from the {@linkcode ASTCondition}.
+	 * @param options.orderFn - The function to build the Drizzle order object from the {@linkcode SortCondition}.
 	 * @param options.validKeys - The valid keys for the parser.
 	 * @param options.defaultKey - The default key for the parser.
 	 */
@@ -201,18 +207,14 @@ export class DrizzleSearchParser<
 
 	/**
 	 * Parse a numeric condition into a Drizzle filter object.
-	 * @param cond - The {@linkcode ASTCondition} to parse.
+	 * @param cond {@linkcode ASTCondition} - The condition to parse.
 	 * @returns The Drizzle filter object.
 	 */
 	parseNumeric(cond: ASTCondition): TFilter | number | undefined {
-		if (!cond.isNumeric || !cond.operator) return undefined;
-		if (typeof cond.value !== "number") return undefined;
+		if (!cond.isNumeric || !cond.operator || typeof cond.value !== "number" || isNaN(cond.value)) return;
 
 		const op = operatorMap.get(cond.operator);
 		const value = cond.value;
-
-		// If the value is NaN, return undefined
-		if (isNaN(value)) return undefined;
 
 		// If the operator is "=", return the number directly
 		if (op === "eq") return value;
@@ -223,14 +225,13 @@ export class DrizzleSearchParser<
 
 	/**
 	 * Parse a date condition into a Drizzle filter object.
-	 * @param cond - The {@linkcode ASTCondition} to parse.
-	 * @param options - The options for the date format.
-	 * @param options.dateFormat - The date format to use. Defaults to "date".
+	 * @param cond {@linkcode ASTCondition} - The condition to parse.
+	 * @param options {@linkcode ParseDateOptions} - The options for the date format.
+	 * @param options.dateFormat - The date format to use. `"date"` (default) or `"unix"`.
 	 * @returns The Drizzle filter object.
 	 */
 	parseDate(cond: ASTCondition, options?: ParseDateOptions): TFilter | undefined {
-		if (!cond.isDate || !cond.operator) return undefined;
-		if (!(cond.value instanceof Date)) return undefined;
+		if (!cond.isDate || !cond.operator || !(cond.value instanceof Date) || isNaN(cond.value.getTime())) return;
 
 		const op = operatorMap.get(cond.operator);
 		const value = cond.value;
@@ -245,7 +246,7 @@ export class DrizzleSearchParser<
 	/**
 	 * Parse a search query into a Drizzle filter object.
 	 * @param query - The search query string.
-	 * @returns The parsed search query. See {@link DrizzleParseResult} for the return type.
+	 * @returns The parsed search query. See {@linkcode DrizzleParseResult} for the return type.
 	 */
 	parse(query: string): DrizzleParseResult<TFilter, TOrder> {
 		const { ast, tokens, metadata } = super._parse(query);
