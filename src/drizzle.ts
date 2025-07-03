@@ -259,7 +259,7 @@ export class DrizzleSearchParser<
 		const orderBy =
 			this.options.orderFn && excluded.filter((cond) => cond.key === "asc" || cond.key === "desc").length > 0
 				? excluded.reduce((acc, cond) => {
-						if ((cond.key === "asc" || cond.key === "desc") && typeof cond.value === "string") {
+						if ((cond.key === "asc" || cond.key === "desc") && typeof cond.value === "string" && acc[cond.value] !== cond.key) {
 							const sortCondition: SortCondition = {
 								dir: cond.key === "asc" ? "asc" : "desc",
 								key: cond.value
