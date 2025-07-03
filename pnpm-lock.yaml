@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@sillvva/utils':
-        specifier: jsr:^0.5.4
-        version: '@jsr/sillvva__utils@0.5.4'
+        specifier: ^0.5.4
+        version: 0.5.4
       drizzle-orm:
         specifier: '>=1.0.0-beta.1'
         version: 1.0.0-beta.1-fd5d1e8
@@ -469,9 +469,6 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@jsr/sillvva__utils@0.5.4':
-    resolution: {integrity: sha512-n5g2W/QnF1ihvrlWTLtNvr7yJ0fJtr5FTHd8n8kfeVB88ziUNAoNivWz6Usxar3qAs/ih2Fv2bbUcUuPvIkmZQ==, tarball: https://npm.jsr.io/~/11/@jsr/sillvva__utils/0.5.4.tgz}
-
   '@napi-rs/wasm-runtime@0.2.11':
     resolution: {integrity: sha512-9DPkXtvHydrcOsopiYpUgPHpmj0HWZKMUnL2dZqpvC42lsratuBG06V5ipyno0fUek5VlFsNQ+AcFATSrJXgMA==}
 
@@ -582,6 +579,9 @@ packages:
     resolution: {integrity: sha512-J8o22LuF0kTe7m+8PvW9wk3/bRq5+mRo5Dqo6+vXb7otCm3TPhYOJqOaQtGU9YMWQSL3krMnoOxMr0+9E6F3Ug==}
     cpu: [x64]
     os: [win32]
+
+  '@sillvva/utils@0.5.4':
+    resolution: {integrity: sha512-SjIX03eGEdvRRvfFCAN8S8pj1QXCXPT99ZN4iLbwmQz0eq7YNa7883Ottfe1Wor95pKZcinfeIBePYVE67ZISQ==}
 
   '@sinclair/typebox@0.34.37':
     resolution: {integrity: sha512-2TRuQVgQYfy+EzHRTIvkhv2ADEouJ2xNS/Vq+W5EuuewBdOrvATvljZTxHWZSTYr2sTjTHpGvucaGAt67S2akw==}
@@ -2370,8 +2370,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@jsr/sillvva__utils@0.5.4': {}
-
   '@napi-rs/wasm-runtime@0.2.11':
     dependencies:
       '@emnapi/core': 1.4.3
@@ -2443,6 +2441,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.44.1':
     optional: true
+
+  '@sillvva/utils@0.5.4': {}
 
   '@sinclair/typebox@0.34.37': {}
 
