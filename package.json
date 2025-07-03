@@ -21,7 +21,7 @@
 		"dev": "tsup --watch",
 		"link": "pnpm build && pnpm link",
 		"clean": "rm -rf dist",
-		"prepublishOnly": "pnpm build",
+		"prepublishOnly": "pnpm install --frozen-lockfile && pnpm build",
 		"typecheck": "tsc --noEmit",
 		"test": "jest"
 	},

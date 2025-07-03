@@ -10,10 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - id: get-version
         run: |
           VERSION=$(jq -r .version package.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - id: check-tag
         run: |
           VERSION=${{ steps.get-version.outputs.version }}
@@ -34,11 +36,19 @@ jobs:
     if: needs.check-version.outputs.should_release == 'true'
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+
       - name: Test
         run: pnpm test
 
@@ -51,16 +61,31 @@ jobs:
       contents: write
     if: needs.test.result == 'success' && needs.check-version.outputs.should_release == 'true'
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         with:
           version: 8
-      - run: pnpm install
-      - run: pnpm build
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
       - name: Create Tag
         run: |
           git tag v${{ needs.check-version.outputs.version }}
           git push origin v${{ needs.check-version.outputs.version }}
+
       - name: Create Draft Release
         uses: softprops/action-gh-release@v2
         with:
