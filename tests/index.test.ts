@@ -1,4 +1,4 @@
-import { QueryParser } from "./index";
+import { QueryParser } from "../src";
 
 describe("QueryParser", () => {
 	it("parses simple word queries", () => {
