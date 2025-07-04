@@ -22,6 +22,9 @@ You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on
 
 # Table of Contents
 
+- [Introduction](#introduction)
+	- [Demo](#demo)
+- [Table of Contents](#table-of-contents)
 - [Installation](#installation)
 - [Classes](#classes)
 	- [The `QueryParser` Class](#the-queryparser-class)
@@ -111,9 +114,9 @@ The only parameter is an optional options object with two properties:
 | `key:/^regex$/`                                           | This syntax combines the properties of the "keyword" syntax and the "regex" syntax.                                                                                                                                          |
 | `key=10`<br>`key>=2024-01-01`<br>`key>=2024-01-01`        | When using numeric operators for numbers or dates, the token will become a "keyword_numeric" or "keyword_date" token with the operator provided. See below<sup>1</sup> for supported date formats.                           |
 | ` key:10..20`<br>`key:2024-01-01 00:00..2024-01-15 12:00` | Range queries allow you to specify a range of values. For ranges, use `key:start..end`. The result will be two "keyword_numeric" or "keyword_date" tokens. See below<sup>1</sup> for supported date formats.                 |
-| `AND` and `OR`                                            | You can use `AND` and `OR` operators between tokens. When no operator is specified, `AND` is implied.                                                                                                                        |
+| `AND`, `&`, `OR`, `\|`                                    | Use `AND`/`&` to require both conditions, `OR`/`\|` for either condition. Adjacent terms default to `AND`.                                                                                                                        |
 | `foo (bar or baz)`                                        | Tokens can be grouped together using parentheses. Groups can also be nested.                                                                                                                                                 |
-| `-`                                                       | The negator character can be used to negate any "word", "keyword", or "phrase" token. Example: `-word -"phrase"`<br><br>It can also be used to negate a group. Example: `-(word1 OR word2)`                                  |
+| `-` and `!`                                               | The negator character can be used to negate any "word", "keyword", or "phrase" token. Example: `-word -"phrase"` or `!word !"phrase"`<br><br>It can also be used to negate a group. Example: `-(word1 OR word2)` or `!(word1 \| word2)`                                  |
 
 <sup>1</sup> The following [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) formats are supported:
 
