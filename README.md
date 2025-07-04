@@ -22,9 +22,6 @@ You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on
 
 # Table of Contents
 
-- [Introduction](#introduction)
-	- [Demo](#demo)
-- [Table of Contents](#table-of-contents)
 - [Installation](#installation)
 - [Classes](#classes)
 	- [The `QueryParser` Class](#the-queryparser-class)
