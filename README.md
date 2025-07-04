@@ -24,17 +24,17 @@ You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on
 
 - [Installation](#installation)
 - [Classes](#classes)
-  - [The `QueryParser` Class](#the-queryparser-class)
-    - [Class Constructor](#class-constructor)
-    - [Syntax Reference](#syntax-reference)
-    - [Type Reference](#type-reference)
-      - [`Token`](#token)
-      - [`ASTNode`](#astnode)
-      - [`ASTCondition`](#astcondition)
-      - [`ParseError`, `ParseMetadata`, and `ParseResult`](#parseerror-parsemetadata-and-parseresult)
-  - [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
-  - [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
-    - [`DrizzleParseResult`](#drizzleparseresult)
+	- [The `QueryParser` Class](#the-queryparser-class)
+		- [Class Constructor](#class-constructor)
+		- [Syntax Reference](#syntax-reference)
+		- [Type Reference](#type-reference)
+			- [`Token`](#token)
+			- [`ASTNode`](#astnode)
+			- [`ASTCondition`](#astcondition)
+			- [`ParseError`, `ParseMetadata`, and `ParseResult`](#parseerror-parsemetadata-and-parseresult)
+	- [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
+	- [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
+		- [`DrizzleParseResult`](#drizzleparseresult)
 
 # Installation
 
@@ -361,7 +361,7 @@ export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>, T
 		/**
 		 * Conditions that were included in the Drizzle-compatible orderBy object.
 		 */
-		sort: SortCondition[];
+		sorted: SortCondition[];
 		/**
 		 * Conditions that were excluded from the Drizzle-compatible where and orderBy objects.
 		 */
