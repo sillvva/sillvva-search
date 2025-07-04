@@ -49,6 +49,17 @@ export interface ParseDateOptions {
 	dateFormat?: "date" | "unix";
 }
 
+type DrizzleParserOptions<TFilter extends RelationsFilter<any, any>, TOrder extends RelationsOrder<any>> = QueryParserOptions & {
+	/**
+	 * The function to build the Drizzle filter object from the {@linkcode ASTCondition}.
+	 */
+	filterFn: (ast: ASTCondition) => TFilter | undefined;
+	/**
+	 * The function to build the Drizzle order object from the {@linkcode SortCondition}.
+	 */
+	orderFn?: (ast: SortCondition) => TOrder | undefined;
+};
+
 /**
  * A parser for Drizzle ORM that extends {@link QueryParser} to parse advanced search queries into Drizzle-compatible filter objects.
  * @typeParam TRelations - The relations of the Drizzle schema returned by {@link defineRelations}.
@@ -111,17 +122,7 @@ export class DrizzleSearchParser<
 	TableName extends keyof TRSchema,
 	TRSchema extends ExtractTablesWithRelations<TRelations> = ExtractTablesWithRelations<TRelations>,
 	TFilter extends RelationsFilter<TRSchema[TableName], TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>,
-	TOrder extends RelationsOrder<TRSchema[TableName]["columns"]> = RelationsOrder<TRSchema[TableName]["columns"]>,
-	DrizzleParserOptions extends QueryParserOptions & {
-		/**
-		 * The function to build the Drizzle filter object from the {@linkcode ASTCondition}.
-		 */
-		filterFn: (ast: ASTCondition) => TFilter | undefined;
-		/**
-		 * The function to build the Drizzle order object from the {@linkcode SortCondition}.
-		 */
-		orderFn?: (ast: SortCondition) => TOrder | undefined;
-	} = { filterFn: (ast: ASTCondition) => TFilter | undefined }
+	TOrder extends RelationsOrder<TRSchema[TableName]["columns"]> = RelationsOrder<TRSchema[TableName]["columns"]>
 > extends QueryParser {
 	/**
 	 * @param options {@linkcode DrizzleParserOptions} - The options for the parser.
@@ -130,7 +131,7 @@ export class DrizzleSearchParser<
 	 * @param options.validKeys - The valid keys for the parser.
 	 * @param options.defaultKey - The default key for the parser.
 	 */
-	constructor(protected options: DrizzleParserOptions) {
+	constructor(protected options: DrizzleParserOptions<TFilter, TOrder>) {
 		if (options.validKeys) {
 			if (!options.validKeys.includes("asc")) options.validKeys = [...options.validKeys, "asc"] as const;
 			if (!options.validKeys.includes("desc")) options.validKeys = [...options.validKeys, "desc"] as const;
