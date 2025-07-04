@@ -24,17 +24,17 @@ You can see a demo of [`DrizzleSearchParser`](#the-drizzlesearchparser-class) on
 
 - [Installation](#installation)
 - [Classes](#classes)
-	- [The `QueryParser` Class](#the-queryparser-class)
-		- [Class Constructor](#class-constructor)
-		- [Syntax Reference](#syntax-reference)
-		- [Type Reference](#type-reference)
-			- [`Token`](#token)
-			- [`ASTNode`](#astnode)
-			- [`ASTCondition`](#astcondition)
-			- [`ParseError`, `ParseMetadata`, and `ParseResult`](#parseerror-parsemetadata-and-parseresult)
-	- [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
-	- [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
-		- [`DrizzleParseResult`](#drizzleparseresult)
+  - [The `QueryParser` Class](#the-queryparser-class)
+    - [Class Constructor](#class-constructor)
+    - [Syntax Reference](#syntax-reference)
+    - [Type Reference](#type-reference)
+      - [`Token`](#token)
+      - [`ASTNode`](#astnode)
+      - [`ASTCondition`](#astcondition)
+      - [`ParseError`, `ParseMetadata`, and `ParseResult`](#parseerror-parsemetadata-and-parseresult)
+  - [The `JSONSearchParser` Class](#the-jsonsearchparser-class)
+  - [The `DrizzleSearchParser` Class](#the-drizzlesearchparser-class)
+    - [`DrizzleParseResult`](#drizzleparseresult)
 
 # Installation
 
@@ -109,7 +109,7 @@ The only parameter is an optional options object with two properties:
 | `key:"a phrase"`                                          | This syntax will be parsed as a "keyword_phrase" token. It combines the properties of the "keyword" and "phrase" tokens.                                                                                                     |
 | `/^regex$/`                                               | This syntax will be parsed as a "regex" token. The regular expression between the `/` will be provided as a string and can be converted to a `RegExp` constructor in JS or passed to a SQL statement using supported syntax. |
 | `key:/^regex$/`                                           | This syntax combines the properties of the "keyword" syntax and the "regex" syntax.                                                                                                                                          |
-| `key=10`<br>`key>=2024-01-01`<br>`key>=2024-01-01`        | When using numeric operators for numbers or dates, the token will become a "keyword_numeric" or "keyword_date" token with the operator provided. See below<sup>1</sup> for supported date formats.                           |
+| `key=10`<br>`key>=2024-01-01`                             | When using numeric operators for numbers or dates, the token will become a "keyword_numeric" or "keyword_date" token with the operator provided. See below<sup>1</sup> for supported date formats.                           |
 | ` key:10..20`<br>`key:2024-01-01 00:00..2024-01-15 12:00` | Range queries allow you to specify a range of values. For ranges, use `key:start..end`. The result will be two "keyword_numeric" or "keyword_date" tokens. See below<sup>1</sup> for supported date formats.                 |
 | `AND` and `OR`                                            | You can use `AND` and `OR` operators between tokens. When no operator is specified, `AND` is implied.                                                                                                                        |
 | `foo (bar or baz)`                                        | Tokens can be grouped together using parentheses. Groups can also be nested.                                                                                                                                                 |
