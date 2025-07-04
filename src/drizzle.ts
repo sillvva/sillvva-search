@@ -29,7 +29,7 @@ export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>, T
 		/**
 		 * Conditions that were included in the Drizzle-compatible orderBy object.
 		 */
-		sort: SortCondition[];
+		sorted: SortCondition[];
 		/**
 		 * Conditions that were excluded from the Drizzle-compatible where and orderBy objects.
 		 */
@@ -255,26 +255,29 @@ export class DrizzleSearchParser<
 		let excluded: ASTCondition[] = [];
 		const where = this.buildWhereClause(ast, false, filtered, excluded);
 
-		const sort: SortCondition[] = [];
-		const orderBy =
-			this.options.orderFn && excluded.filter((cond) => cond.key === "asc" || cond.key === "desc").length > 0
-				? excluded.reduce((acc, cond) => {
-						if ((cond.key === "asc" || cond.key === "desc") && typeof cond.value === "string" && acc[cond.value] !== cond.key) {
-							const sortCondition: SortCondition = {
-								dir: cond.key === "asc" ? "asc" : "desc",
-								key: cond.value
-							};
-							const order = this.options.orderFn?.(sortCondition);
-							if (order) {
-								sort.push(sortCondition);
-								excluded = excluded.filter((c) => c.key !== cond.key && c.value !== cond.value);
-							}
-							return order ? { ...acc, ...order } : acc;
-						}
+		const sorted: SortCondition[] = [];
+		const orderBy = (() => {
+			if (!this.options.orderFn) return;
+			if (!excluded.filter((cond) => cond.key === "asc" || cond.key === "desc").length) return;
 
-						return acc;
-				  }, {} as TOrder)
-				: undefined;
+			let orderBy = {} as TOrder;
+			for (const cond of excluded) {
+				if ((cond.key === "asc" || cond.key === "desc") && typeof cond.value === "string" && orderBy[cond.value] !== cond.key) {
+					const sortCondition: SortCondition = {
+						dir: cond.key === "asc" ? "asc" : "desc",
+						key: cond.value
+					};
+					const order = this.options.orderFn(sortCondition);
+					if (order) {
+						sorted.push(sortCondition);
+						excluded = excluded.filter((c) => c.key !== cond.key && c.value !== cond.value);
+						orderBy = { ...orderBy, ...order };
+					}
+				}
+			}
+
+			return orderBy;
+		})();
 
 		return {
 			tokens,
@@ -284,7 +287,7 @@ export class DrizzleSearchParser<
 			orderBy,
 			conditions: {
 				filtered,
-				sort,
+				sorted,
 				excluded
 			}
 		};
