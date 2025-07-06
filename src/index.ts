@@ -309,7 +309,6 @@ export class QueryParser {
 				} else if (negation) {
 					tokens.push({ type: "negation", position: match.index });
 				} else if (keyword && (value || quote || regex)) {
-					// Filter out invalid keys if validKeys is specified
 					if (this.options?.validKeys && !this.options.validKeys.includes(keyword)) {
 						if (tokens.at(-1)?.type === "negation") tokens.pop();
 						errors.push({
@@ -415,7 +414,6 @@ export class QueryParser {
 						});
 					}
 				} else if (keywordNumeric && operator && numericValue) {
-					// Filter out invalid keys if validKeys is specified
 					if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
 						if (tokens.at(-1)?.type === "negation") tokens.pop();
 						errors.push({
@@ -561,7 +559,6 @@ export class QueryParser {
 		return { tokens, errors };
 	}
 
-	// Convert tokens to Abstract Syntax Tree
 	private buildAST(tokens: Token[]): ASTNode | null {
 		let index = 0;
 
