@@ -166,6 +166,9 @@ export class DrizzleSearchParser<
 						else return;
 					}
 
+					if (node.operator === "&") node.operator = "AND";
+					if (node.operator === "|") node.operator = "OR";
+
 					const left = leftClause[node.operator];
 					const right = rightClause[node.operator];
 					const leftArray = Array.isArray(left) ? left : [leftClause];

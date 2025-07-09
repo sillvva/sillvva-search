@@ -22,11 +22,10 @@
 /**
  * Represents a logical operator in a search query.
  */
-const LOGICAL_OPERATORS = ['AND', 'OR', '&', '|'] as const;
-type LogicalOperator = typeof LOGICAL_OPERATORS[number];
+const LOGICAL_OPERATORS = ["AND", "OR", "&", "|"] as const;
+type LogicalOperator = (typeof LOGICAL_OPERATORS)[number];
 
-const isLogicalOperator = (str: string): str is LogicalOperator => 
-	LOGICAL_OPERATORS.includes(str as LogicalOperator);
+const isLogicalOperator = (str: string): str is LogicalOperator => LOGICAL_OPERATORS.includes(str as LogicalOperator);
 
 /**
  * Represents a numeric operator in a search query.
@@ -251,7 +250,7 @@ export class QueryParser {
 		regexes.push(`(\\w+)(:|=|>=|<=|>|<)(?:${dateTimeRegex}|${monthRegex}|${yearRegex}|${numberRegex})`);
 
 		// Text (keyword/value/quote/regex) - now includes single-char operators
-    regexes.push(/(?:(\w+):)?(?:(\w+|[&|])|"([^"]+)"|\/([^\/]+)\/)/g.source);
+		regexes.push(/(?:(\w+):)?(?:(\w+|[&|])|"([^"]+)"|\/([^\/]+)\/)/g.source);
 
 		// Any non-whitespace (other)
 		regexes.push(/([^\s]+)/g.source);
@@ -306,7 +305,7 @@ export class QueryParser {
 				}
 
 				if (open) {
-					tokens.push({ type: "open_paren", negated: open.startsWith("-") || open.startsWith('!'), position: match.index });
+					tokens.push({ type: "open_paren", negated: open.startsWith("-") || open.startsWith("!"), position: match.index });
 				} else if (close) {
 					tokens.push({ type: "close_paren", position: match.index });
 				} else if (negation) {
@@ -440,7 +439,6 @@ export class QueryParser {
 						position: match.index
 					});
 				} else if (keywordNumeric && operator && (dateValue || monthValue || yearValue)) {
-					// Filter out invalid keys if validKeys is specified
 					if (this.options?.validKeys && !this.options.validKeys.includes(keywordNumeric)) {
 						if (tokens.at(-1)?.type === "negation") tokens.pop();
 						errors.push({
