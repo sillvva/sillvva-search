@@ -8,7 +8,6 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
 
@@ -23,7 +22,11 @@
 /**
  * Represents a logical operator in a search query.
  */
-export type LogicalOperator = "AND" | "OR";
+const LOGICAL_OPERATORS = ['AND', 'OR', '&', '|'] as const;
+type LogicalOperator = typeof LOGICAL_OPERATORS[number];
+
+const isLogicalOperator = (str: string): str is LogicalOperator => 
+	LOGICAL_OPERATORS.includes(str as LogicalOperator);
 
 /**
  * Represents a numeric operator in a search query.
@@ -228,7 +231,7 @@ export class QueryParser {
 		regexes.push(/(?: |^)?(-?\()|(\))/g.source);
 
 		// Negation (negation)
-		regexes.push(/(?: |^)(-)/g.source);
+		regexes.push(/(?: |^)([-!])/g.source);
 
 		const dateTimeRegex = /(\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?)/g.source;
 		const timeRegex = /(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)/g.source;
@@ -247,8 +250,8 @@ export class QueryParser {
 		// Numeric comparison (keywordNumeric/operator/dateValue/monthValue/yearValue/numericValue)
 		regexes.push(`(\\w+)(:|=|>=|<=|>|<)(?:${dateTimeRegex}|${monthRegex}|${yearRegex}|${numberRegex})`);
 
-		// Text (keyword/value/quote/regex)
-		regexes.push(/(?:(\w+):)?(?:(\w+)|"([^"]+)"|\/([^\/]+)\/)/g.source);
+		// Text (keyword/value/quote/regex) - now includes single-char operators
+    regexes.push(/(?:(\w+):)?(?:(\w+|[&|])|"([^"]+)"|\/([^\/]+)\/)/g.source);
 
 		// Any non-whitespace (other)
 		regexes.push(/([^\s]+)/g.source);
@@ -303,7 +306,7 @@ export class QueryParser {
 				}
 
 				if (open) {
-					tokens.push({ type: "open_paren", negated: open.startsWith("-"), position: match.index });
+					tokens.push({ type: "open_paren", negated: open.startsWith("-") || open.startsWith('!'), position: match.index });
 				} else if (close) {
 					tokens.push({ type: "close_paren", position: match.index });
 				} else if (negation) {
@@ -517,7 +520,7 @@ export class QueryParser {
 				} else if (value) {
 					const upperValue = value.toUpperCase();
 
-					if (upperValue === "AND" || upperValue === "OR") {
+					if (isLogicalOperator(upperValue)) {
 						tokens.push({ type: "operator", value: upperValue, position: match.index });
 					} else if (this.options?.defaultKey) {
 						tokens.push({ type: "keyword", key: this.options.defaultKey, value, position: match.index });
