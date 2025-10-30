@@ -269,9 +269,12 @@ export class QueryParser {
 			while ((match = regex.exec(query))) {
 				const [
 					_,
+					// Logical grouping
 					open,
 					close,
+					// Negation
 					negation,
+					// Date and number ranges
 					keywordRange,
 					date1,
 					date2,
@@ -281,16 +284,19 @@ export class QueryParser {
 					year2,
 					numeric1,
 					numeric2,
+					// Numeric comparison
 					keywordNumeric,
 					operator,
 					dateValue,
 					monthValue,
 					yearValue,
 					numericValue,
+					// Text
 					keyword,
 					value,
 					quote,
 					regex,
+					// Any non-whitespace
 					other
 				] = match;
 
