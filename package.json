@@ -1,6 +1,6 @@
 {
 	"name": "@sillvva/search",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "A parser and analyzer for advanced search queries, supporting tokenization, abstract syntax tree generation, and condition extraction.",
 	"license": "MIT",
 	"keywords": [
@@ -53,7 +53,7 @@
 		"dist"
 	],
 	"peerDependencies": {
-		"drizzle-orm": ">=1.0.0-beta.1"
+		"drizzle-orm": ">=1.0.0-beta.22"
 	},
 	"peerDependenciesMeta": {
 		"drizzle-orm": {

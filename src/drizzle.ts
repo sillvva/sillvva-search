@@ -1,4 +1,4 @@
-import type { ExtractTablesWithRelations, Relations, RelationsFilter, RelationsOrder } from "drizzle-orm";
+import type { GetTableViewColumns, RelationsFilter, RelationsOrder, TablesRelationalConfig } from "drizzle-orm";
 import { QueryParser, type ASTCondition, type ASTNode, type NumericOperator, type ParseResult, type QueryParserOptions } from "./index";
 
 export type DrizzleOperator = "eq" | "gt" | "lt" | "gte" | "lte";
@@ -8,8 +8,10 @@ export interface SortCondition {
 	key: string;
 }
 
-export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>, TOrder extends RelationsOrder<any>>
-	extends Omit<ParseResult, "astConditions"> {
+export interface DrizzleParseResult<TFilter extends RelationsFilter<any, any>, TOrder extends RelationsOrder<any>> extends Omit<
+	ParseResult,
+	"astConditions"
+> {
 	/**
 	 * The Drizzle-compatible filter object.
 	 */
@@ -118,11 +120,12 @@ type DrizzleParserOptions<TFilter extends RelationsFilter<any, any>, TOrder exte
  * ```
  */
 export class DrizzleSearchParser<
-	TRelations extends Relations<any, any, any>,
-	TableName extends keyof TRSchema,
-	TRSchema extends ExtractTablesWithRelations<TRelations> = ExtractTablesWithRelations<TRelations>,
-	TFilter extends RelationsFilter<TRSchema[TableName], TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>,
-	TOrder extends RelationsOrder<TRSchema[TableName]["columns"]> = RelationsOrder<TRSchema[TableName]["columns"]>
+	TRelations extends TablesRelationalConfig,
+	TableName extends keyof TRelations,
+	TFilter extends RelationsFilter<TRelations[TableName], TRelations> = RelationsFilter<TRelations[TableName], TRelations>,
+	TOrder extends RelationsOrder<GetTableViewColumns<TRelations[TableName]["table"]>> = RelationsOrder<
+		GetTableViewColumns<TRelations[TableName]["table"]>
+	>
 > extends QueryParser {
 	/**
 	 * @param options {@linkcode DrizzleParserOptions} - The options for the parser.
@@ -173,7 +176,7 @@ export class DrizzleSearchParser<
 					const right = rightClause[node.operator];
 					const leftArray = Array.isArray(left) ? left : [leftClause];
 					const rightArray = Array.isArray(right) ? right : [rightClause];
-					return { [node.operator]: [...leftArray, ...rightArray] } as TFilter;
+					return { [node.operator]: [...leftArray, ...rightArray] } as unknown as TFilter;
 				}
 				case "condition": {
 					const cond: ASTCondition = {
