@@ -21,9 +21,14 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          registry-url: "https://registry.npmjs.org"
+          node-version: 24
           cache: "pnpm"
 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
       - name: Publish
-        run: pnpm publish --access public --no-git-checks --provenance
+        run: npm publish --provenance --access public
